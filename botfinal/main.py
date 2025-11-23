@@ -4,12 +4,15 @@ SALESBOT Training System - Main FastAPI Application
 import os
 import sys
 import logging
+import tempfile
+import uuid
 from pathlib import Path
 from typing import List
 import importlib.util
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
 import uvicorn
+from gtts import gTTS
 
 # Configure logging
 logging.basicConfig(
@@ -115,10 +118,6 @@ async def text_to_speech(text: str, voice_type: str = "default"):
     Converts text to audio file and returns the file path or audio data
     """
     try:
-        from gtts import gTTS
-        import tempfile
-        import uuid
-        
         # Create audio directory if it doesn't exist
         audio_dir = Path(__file__).parent / "audio_cache"
         audio_dir.mkdir(exist_ok=True)

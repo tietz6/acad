@@ -1,6 +1,7 @@
 """
 FastAPI Router for Academy Module
 """
+import os
 import logging
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Body
@@ -16,6 +17,9 @@ from .progress_repository import ProgressRepository
 from .service import AcademyService
 
 logger = logging.getLogger(__name__)
+
+# Configuration
+BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://127.0.0.1:8080")
 
 # Initialize repositories and service
 module_repo = ModuleRepository()
@@ -243,7 +247,7 @@ async def generate_lesson_tts(
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                "http://127.0.0.1:8080/voice/v1/tts",
+                f"{BACKEND_BASE_URL}/voice/v1/tts",
                 params={
                     "text": lesson.content,
                     "voice_type": tts_request.voice_type
@@ -256,7 +260,7 @@ async def generate_lesson_tts(
                     "success": True,
                     "lesson_id": lesson_id,
                     "module_id": module_id,
-                    "audio_url": f"http://127.0.0.1:8080{tts_result['audio_url']}",
+                    "audio_url": f"{BACKEND_BASE_URL}{tts_result['audio_url']}",
                     "voice_type": tts_request.voice_type
                 }
             else:
