@@ -1,198 +1,302 @@
-# SALESBOT Training System
+# SALESBOT Training System - На Счастье Academy
 
-Internal training and academy system for "На Счастье" company.
+Внутренняя система обучения и академия для компании "На Счастье".
 
-## Overview
+## Обзор
 
-This is a comprehensive training platform that combines:
-- **FastAPI Backend**: RESTful API for managing training modules, lessons, and user progress
-- **Telegram Bot**: Interactive learning interface for employees
-- **Modular Architecture**: Easy to extend with new training modules
+Это комплексная обучающая платформа, которая объединяет:
+- **FastAPI Backend**: RESTful API для управления обучающими модулями, уроками и прогрессом пользователей
+- **Telegram Bot**: Интерактивный интерфейс обучения для сотрудников
+- **Модульная архитектура**: Легко расширяется новыми обучающими модулями
+- **Система ролей**: Персонализированное обучение для разных должностей
 
-## Features
+## Возможности
 
-- 📚 **Training Modules**: Organized courses for different roles (sales, production, marketing, etc.)
-- 📖 **Interactive Lessons**: Step-by-step learning with progress tracking
-- 📝 **Tests & Assessments**: Verify knowledge with quizzes
-- 🔊 **Text-to-Speech**: Listen to lessons as audio
-- 📊 **Progress Tracking**: Monitor learning progress across modules
-- 🔍 **Search**: Find specific content quickly
+- 📚 **Обучающие модули**: Организованные курсы для разных ролей (менеджеры по продажам, генераторы, админы)
+- 📖 **Интерактивные уроки**: Пошаговое обучение с отслеживанием прогресса
+- 📝 **Тесты и проверки**: Проверка знаний с помощью тестов
+- 🔊 **Озвучка текста (TTS)**: Прослушивание уроков в аудиоформате (женский/мужской голос)
+- 📊 **Отслеживание прогресса**: Мониторинг прогресса обучения по модулям
+- 🔍 **Поиск**: Быстрый поиск конкретного контента
+- 👥 **Роли пользователей**: Фильтрация контента по роли (менеджер, генератор, админ, другое)
+- 📈 **Админ-аналитика**: Подробная статистика по прогрессу команды
 
-## Architecture
+## Архитектура
 
 ### Backend (FastAPI)
-- **Main Application**: `main.py` - FastAPI server with auto-loader for modules
-- **Modules System**: Dynamically loads routers from `modules/` directory
-- **Academy Module**: Complete training system under `modules/academy/`
-  - `models.py` - Pydantic models
-  - `repository.py` - Module data loader
-  - `progress_repository.py` - User progress tracking
-  - `service.py` - Business logic
-  - `router.py` - API endpoints
+- **Главное приложение**: `main.py` - FastAPI сервер с автозагрузкой модулей
+- **Система модулей**: Динамически загружает роутеры из директории `modules/`
+- **Модуль Academy**: Полная система обучения в `modules/academy/`
+  - `models.py` - Pydantic модели
+  - `repository.py` - Загрузчик данных модулей
+  - `progress_repository.py` - Отслеживание прогресса пользователей
+  - `service.py` - Бизнес-логика
+  - `router.py` - API эндпоинты
 
-### Data Layer
-- **Training Content**: YAML files in `data/academy/modules/`
-- **Progress Database**: SQLite for tracking user completion
+### Слой данных
+- **Обучающий контент**: YAML файлы в `data/academy/modules/`
+- **База данных прогресса**: SQLite для отслеживания завершения
+- **Таблица пользователей**: Хранение ролей пользователей
 
 ### Telegram Bot
-- **Interactive Interface**: `simple_telegram_bot.py`
-- Built with `python-telegram-bot` 20.x
-- Conversational flow for browsing and learning
+- **Интерактивный интерфейс**: `simple_telegram_bot.py`
+- Построен на `python-telegram-bot` 20.x
+- Разговорный поток для просмотра и обучения
+- Полностью на русском языке
 
-## Installation
+## Установка
 
-1. **Install Dependencies**:
+1. **Установка зависимостей**:
 ```bash
 cd botfinal
 pip install -r requirements.txt
 ```
 
-2. **Set Up Environment** (for Telegram bot):
+2. **Настройка окружения** (для Telegram бота):
 ```bash
-export TELEGRAM_BOT_TOKEN="your-bot-token"
+export TELEGRAM_BOT_TOKEN="ваш-токен-бота"
 ```
 
-To get a Telegram bot token:
-- Message [@BotFather](https://t.me/botfather) on Telegram
-- Use `/newbot` command
-- Follow the instructions to create your bot
+Для получения токена Telegram бота:
+- Напишите [@BotFather](https://t.me/botfather) в Telegram
+- Используйте команду `/newbot`
+- Следуйте инструкциям для создания бота
 
-## Usage
+3. **Настройка админ-доступа** (опционально):
+```bash
+export ADMIN_API_KEY="ваш-секретный-ключ"
+```
 
-### Start Backend
+## Использование
 
-**Option 1: Using the helper script**
+### Запуск Backend
+
+**Вариант 1: Используя вспомогательный скрипт**
 ```bash
 ./start_backend.sh
 ```
 
-**Option 2: Direct command**
+**Вариант 2: Прямая команда**
 ```bash
 python main.py
 ```
 
-The backend will start on `http://0.0.0.0:8080`
+Backend запустится на `http://0.0.0.0:8080`
 
-Access the API documentation at: `http://localhost:8080/docs`
+Доступ к документации API: `http://localhost:8080/docs`
 
-### Start Telegram Bot (Optional)
+### Запуск Telegram Bot (опционально)
 
-**Option 1: Using the helper script**
+**Вариант 1: Используя вспомогательный скрипт**
 ```bash
-export TELEGRAM_BOT_TOKEN="your-token"
+export TELEGRAM_BOT_TOKEN="ваш-токен"
 ./start_bot.sh
 ```
 
-**Option 2: Direct command**
+**Вариант 2: Прямая команда**
 ```bash
-export TELEGRAM_BOT_TOKEN="your-token"
+export TELEGRAM_BOT_TOKEN="ваш-токен"
 python simple_telegram_bot.py
 ```
 
-## API Endpoints
+## API Эндпоинты
 
-### Academy Module (`/academy/v1`)
+### Модуль Academy (`/academy/v1`)
 
-- `GET /academy/v1/modules` - List all modules
-- `GET /academy/v1/modules/{module_id}` - Get module details
-- `GET /academy/v1/modules/{module_id}/lessons` - List lessons
-- `GET /academy/v1/modules/{module_id}/lessons/{lesson_id}` - Get lesson
-- `POST /academy/v1/progress/{user_id}/lessons/{module_id}/{lesson_id}/complete` - Mark completed
-- `GET /academy/v1/progress/{user_id}` - Get user progress
-- `POST /academy/v1/modules/{module_id}/tests/{test_id}/submit` - Submit test
-- `POST /academy/v1/lessons/{module_id}/{lesson_id}/tts` - Generate audio
-- `GET /academy/v1/search?query=...` - Search content
+#### Модули и уроки
+- `GET /academy/v1/modules` - Список всех модулей
+  - Query параметры: `role` (фильтр по роли), `user_id` (автоматическая фильтрация по роли пользователя)
+- `GET /academy/v1/modules/{module_id}` - Детали модуля
+- `GET /academy/v1/modules/{module_id}/lessons` - Список уроков
+- `GET /academy/v1/modules/{module_id}/lessons/{lesson_id}` - Получить урок
+- `POST /academy/v1/progress/{user_id}/lessons/{module_id}/{lesson_id}/complete` - Отметить как завершённый
+- `POST /academy/v1/progress/{user_id}/lessons/{module_id}/{lesson_id}/start` - Начать урок
+- `GET /academy/v1/progress/{user_id}` - Прогресс пользователя
+- `POST /academy/v1/modules/{module_id}/tests/{test_id}/submit` - Отправить тест
+- `POST /academy/v1/lessons/{module_id}/{lesson_id}/tts` - Генерация аудио (TTS)
+  - Body: `{"voice_type": "ru_female"}` или `"ru_male"`
+- `GET /academy/v1/search?query=...` - Поиск контента
 
-### Core Endpoints
+#### Управление ролями
+- `POST /academy/v1/users/{user_id}/role` - Установить роль пользователя
+  - Body: `{"role": "sales_manager"}` (sales_manager, generator, admin, other)
+- `GET /academy/v1/users/{user_id}/role` - Получить роль пользователя
 
-- `GET /` - Service info
-- `GET /api/public/v1/health` - Health check
-- `POST /voice/v1/tts` - Text-to-speech generation
-- `GET /voice/v1/audio/{filename}` - Get audio file
+#### Админ-аналитика (требуется X-Admin-Token заголовок)
+- `GET /academy/v1/admin/users` - Список всех пользователей со статистикой
+- `GET /academy/v1/admin/users/{user_id}/progress` - Детальный прогресс пользователя
+- `GET /academy/v1/admin/stats/summary` - Сводная статистика
 
-## Adding Training Content
+### Основные эндпоинты
 
-Create a YAML file in `data/academy/modules/`:
+- `GET /` - Информация о сервисе
+- `GET /api/public/v1/health` - Проверка здоровья
+- `POST /voice/v1/tts` - Генерация text-to-speech
+- `GET /voice/v1/audio/{filename}` - Получить аудиофайл
+
+## Роли пользователей
+
+Система поддерживает 4 роли:
+
+1. **sales_manager** - Менеджер по продажам
+   - Доступ к модулям продаж (F1)
+   - Техники продаж, работа с клиентами, воронка S0-S9
+
+2. **generator** - Генератор / Продакшн
+   - Доступ к модулям продакшена (F3)
+   - Стандарты качества, создание контента (песни, анимация, монтаж)
+
+3. **admin** - Руководитель / Администратор
+   - Доступ ко всем модулям
+   - Доступ к админ-аналитике
+
+4. **other** - Другие роли
+   - Доступ к общим модулям
+
+## Структура обучающего контента
+
+### Пример YAML модуля
 
 ```yaml
-id: "module_id"
-title: "Module Title"
-description: "Module description"
-roles: ["sales", "production"]
+id: "module3_sales_f1"
+title: "Модуль 3 — Продажи (F1)"
+description: "Как мы продаём с теплотой и без давления"
+roles: ["sales_manager"]
+f_block: "F1"
+products: ["P1", "P2", "P3", "P4"]
 level: 1
-estimated_duration_minutes: 60
+estimated_duration_minutes: 90
 
 lessons:
-  - id: "lesson1"
-    title: "Lesson Title"
+  - id: "m3_l1"
+    title: "Воронка продаж S0–S9"
     type: "text"
     content: |
-      Lesson content here...
-    duration_minutes: 20
+      Понимание нашей воронки продаж...
+    duration_minutes: 30
     order: 1
 
 tests:
-  - id: "test1"
-    title: "Test Title"
-    passing_score: 70
+  - id: "m3_test1"
+    title: "Тест по воронке продаж"
+    passing_score: 80
     questions:
       - id: "q1"
         type: "single"
-        question: "Question text?"
+        question: "Что такое S0 в воронке продаж?"
         options:
-          - "Option A"
-          - "Option B"
-          - "Option C"
-        correct_index: 0
+          - "Первый контакт с клиентом"
+          - "Лид создан / новый лид"
+        correct_index: 1
 ```
 
-The module will be automatically loaded on backend startup.
+### Метаданные F-блоков и продуктов
 
-## Telegram Bot Commands
+- **F-блоки (F1-F7)**: Основные направления (F1 - Продажи, F3 - Продакшн, и т.д.)
+- **Продукты (P1-P5)**: 
+  - P1 - Песня
+  - P2 - Фото
+  - P3 - Мультик/Анимация
+  - P4 - Кавер
+  - P5 - Монтаж
 
-- `/start` - Welcome message
-- `/help` - Show help
-- `/academy` - Browse training modules
-- `/progress` - View your progress
-- `/search <query>` - Search content
+## Команды Telegram Bot
 
-## Development
+- `/start` - Приветственное сообщение и выбор роли (при первом запуске)
+- `/help` - Показать помощь
+- `/academy` - Просмотр обучающих модулей (фильтруется по роли)
+- `/progress` - Посмотреть ваш прогресс
+- `/search <запрос>` - Поиск контента
 
-### Project Structure
+### Типичный пользовательский поток
+
+1. Пользователь отправляет `/start`
+2. Если роль не установлена - бот просит выбрать роль
+3. Пользователь выбирает роль (Менеджер/Генератор/Админ/Другое)
+4. Пользователь отправляет `/academy`
+5. Бот показывает список модулей, доступных для выбранной роли
+6. Пользователь выбирает модуль
+7. Бот показывает детали модуля с уроками и тестами
+8. Пользователь выбирает урок
+9. Бот отображает контент урока по частям с навигацией
+10. Пользователь может:
+    - Навигировать по частям урока
+    - Отметить урок как пройденный
+    - Запросить аудио версию (TTS) с выбором голоса
+    - Вернуться к модулю
+11. Пользователь может проходить тесты после завершения уроков
+12. Пользователь проверяет прогресс с `/progress`
+
+## Админ-аналитика
+
+### Использование с curl
+
+Получить всех пользователей:
+```bash
+curl -H "X-Admin-Token: ваш-ключ" \
+  http://localhost:8080/academy/v1/admin/users
+```
+
+Получить сводную статистику:
+```bash
+curl -H "X-Admin-Token: ваш-ключ" \
+  http://localhost:8080/academy/v1/admin/stats/summary
+```
+
+Получить прогресс конкретного пользователя:
+```bash
+curl -H "X-Admin-Token: ваш-ключ" \
+  http://localhost:8080/academy/v1/admin/users/123456789/progress
+```
+
+## Разработка
+
+### Структура проекта
 ```
 botfinal/
-├── main.py                 # FastAPI application
-├── simple_telegram_bot.py  # Telegram bot
-├── requirements.txt        # Dependencies
-├── modules/               # Modular components
-│   └── academy/          # Academy module
+├── main.py                 # FastAPI приложение
+├── simple_telegram_bot.py  # Telegram бот
+├── requirements.txt        # Зависимости
+├── modules/               # Модульные компоненты
+│   └── academy/          # Модуль Academy
 │       ├── __init__.py
 │       ├── models.py
 │       ├── repository.py
 │       ├── progress_repository.py
 │       ├── service.py
 │       └── router.py
-└── data/
-    └── academy/
-        └── modules/       # Training content (YAML)
+├── data/
+│   └── academy/
+│       └── modules/       # Обучающий контент (YAML)
+│           ├── module1_intro.yaml
+│           ├── module2_production.yaml
+│           └── module3_sales_f1.yaml
+└── academy_progress.db    # База данных SQLite
 ```
 
-### Extending the System
+### Расширение системы
 
-1. **Add New Modules**: Create a new directory in `modules/` with a `router.py`
-2. **Add Training Content**: Create YAML files in `data/academy/modules/`
-3. **Customize Bot**: Modify `simple_telegram_bot.py` for new features
+1. **Добавление новых модулей**: Создайте новую директорию в `modules/` с файлом `router.py`
+2. **Добавление обучающего контента**: Создайте YAML файлы в `data/academy/modules/`
+3. **Кастомизация бота**: Модифицируйте `simple_telegram_bot.py` для новых функций
 
-## Logging
+## Логирование
 
-The system logs:
-- Module discovery and loading
-- API requests and errors
-- User progress updates
-- TTS generation
+Система логирует:
+- Обнаружение и загрузку модулей
+- API запросы и ошибки
+- Обновления прогресса пользователей
+- Генерацию TTS
+- Действия пользователей в Telegram боте
 
-Check console output for operational status.
+Проверяйте вывод консоли для операционного статуса.
 
-## License
+## Безопасность
 
-Internal use for "На Счастье" company.
+- Админ-эндпоинты защищены через `X-Admin-Token` заголовок
+- Установите `ADMIN_API_KEY` переменную окружения для производственного использования
+- Никогда не коммитьте секретные ключи в репозиторий
+
+## Лицензия
+
+Внутреннее использование для компании "На Счастье".
