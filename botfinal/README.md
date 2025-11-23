@@ -47,21 +47,45 @@ cd botfinal
 pip install -r requirements.txt
 ```
 
-2. **Set Up Environment**:
+2. **Set Up Environment** (for Telegram bot):
 ```bash
-# For Telegram bot (optional)
 export TELEGRAM_BOT_TOKEN="your-bot-token"
 ```
 
-3. **Start Backend**:
+To get a Telegram bot token:
+- Message [@BotFather](https://t.me/botfather) on Telegram
+- Use `/newbot` command
+- Follow the instructions to create your bot
+
+## Usage
+
+### Start Backend
+
+**Option 1: Using the helper script**
+```bash
+./start_backend.sh
+```
+
+**Option 2: Direct command**
 ```bash
 python main.py
 ```
 
 The backend will start on `http://0.0.0.0:8080`
 
-4. **Start Telegram Bot** (optional):
+Access the API documentation at: `http://localhost:8080/docs`
+
+### Start Telegram Bot (Optional)
+
+**Option 1: Using the helper script**
 ```bash
+export TELEGRAM_BOT_TOKEN="your-token"
+./start_bot.sh
+```
+
+**Option 2: Direct command**
+```bash
+export TELEGRAM_BOT_TOKEN="your-token"
 python simple_telegram_bot.py
 ```
 
