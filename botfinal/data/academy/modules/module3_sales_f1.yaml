@@ -1,255 +1,260 @@
 id: "module3_sales_f1"
-title: "Module 3 — Sales (F1)"
-description: "How we sell with warmth and without pressure. Master the art of consultative selling."
-roles: ["sales"]
+title: "Модуль 3 — Продажи (F1)"
+description: "Как мы продаём с теплотой и без давления. Овладейте искусством консультативных продаж."
+roles: ["sales_manager"]
+f_block: "F1"
+products: ["P1", "P2", "P3", "P4"]
 level: 1
 estimated_duration_minutes: 90
 
 lessons:
   - id: "m3_l1"
-    title: "Sales Funnel S0–S9"
+    title: "Воронка продаж S0–S9"
     type: "text"
     content: |
-      Understanding Our Sales Funnel
+      Понимание нашей воронки продаж
       
-      At На Счастье, we use a structured sales funnel to guide customers through their journey. 
-      Each stage is designed to build trust and provide value.
+      В компании На Счастье мы используем структурированную воронку продаж для сопровождения 
+      клиентов через их путь. Каждый этап разработан для построения доверия и предоставления ценности.
       
-      The Sales Stages:
+      Этапы продаж:
       
-      S0 - Lead Created: A new potential customer enters our system
-      - Source identified (website, referral, social media)
-      - Basic contact information collected
-      - Initial interest noted
+      S0 - Лид создан: новый потенциальный клиент попадает в нашу систему
+      - Идентифицирован источник (сайт, рекомендация, соцсети)
+      - Собрана базовая контактная информация
+      - Отмечен первоначальный интерес
       
-      S1 - First Contact: Initial outreach to the lead
-      - Friendly introduction to На Счастье
-      - Understanding customer's needs
-      - Setting expectations for next steps
+      S1 - Первый контакт: начальная коммуникация с лидом
+      - Дружеское знакомство с На Счастье
+      - Понимание потребностей клиента
+      - Установка ожиданий для следующих шагов
       
-      S2 - Needs Assessment: Deep dive into customer requirements
-      - Active listening to understand pain points
-      - Asking clarifying questions
-      - Identifying the best solution
+      S2 - Оценка потребностей: глубокое погружение в требования клиента
+      - Активное слушание для понимания болевых точек
+      - Задавание уточняющих вопросов
+      - Определение наилучшего решения
       
-      S3 - Solution Presentation: Showing how we can help
-      - Tailored product recommendations
-      - Demonstration of features and benefits
-      - Addressing specific needs identified
+      S3 - Презентация решения: показываем, как мы можем помочь
+      - Индивидуальные рекомендации продуктов
+      - Демонстрация характеристик и преимуществ
+      - Решение конкретных выявленных потребностей
       
-      S4 - Proposal Sent: Formal offer delivered
-      - Detailed pricing and options
-      - Clear terms and conditions
-      - Timeline for decision
+      S4 - Отправлено предложение: формальное предложение доставлено
+      - Детальное ценообразование и опции
+      - Чёткие условия и положения
+      - График для принятия решения
       
-      S5 - Negotiation: Working through details
-      - Addressing concerns and questions
-      - Finding mutually beneficial terms
-      - Building confidence in the partnership
+      S5 - Переговоры: проработка деталей
+      - Решение вопросов и опасений
+      - Поиск взаимовыгодных условий
+      - Построение уверенности в партнёрстве
       
-      S6 - Contract Signed: Agreement finalized
-      - Legal documents completed
-      - Payment terms confirmed
-      - Onboarding process begins
+      S6 - Контракт подписан: соглашение финализировано
+      - Юридические документы завершены
+      - Подтверждены условия оплаты
+      - Начинается процесс адаптации
       
-      S7 - Delivery/Implementation: Solution delivered
-      - Product/service provided as promised
-      - Quality checks completed
-      - Customer trained if needed
+      S7 - Доставка/Реализация: решение доставлено
+      - Продукт/услуга предоставлены как обещано
+      - Завершены проверки качества
+      - Клиент обучен при необходимости
       
-      S8 - Follow-up: Ensuring satisfaction
-      - Checking in with customer
-      - Addressing any issues
-      - Building relationship for future business
+      S8 - Последующие действия: обеспечение удовлетворённости
+      - Связь с клиентом
+      - Решение любых проблем
+      - Построение отношений для будущего бизнеса
       
-      S9 - Closed Won: Successful completion
-      - Customer satisfied and active
-      - Potential for upsell/cross-sell
-      - Referral opportunities identified
+      S9 - Закрыто/Выиграно: успешное завершение
+      - Клиент доволен и активен
+      - Потенциал для допродаж/кросс-продаж
+      - Выявлены возможности для рекомендаций
       
-      Remember: Not every lead reaches S9, and that's okay. Our goal is to provide 
-      value at every stage and maintain positive relationships even if a sale doesn't close.
+      Помните: не каждый лид достигает S9, и это нормально. Наша цель — предоставлять 
+      ценность на каждом этапе и поддерживать позитивные отношения, даже если продажа не закрывается.
     duration_minutes: 30
     order: 1
 
   - id: "m3_l2"
-    title: "First Contact Script"
+    title: "Скрипт первого контакта"
     type: "text"
     content: |
-      The Art of the First Contact
+      Искусство первого контакта
       
-      Your first interaction with a customer sets the tone for the entire relationship. 
-      Here's our approach to making it warm, professional, and effective.
+      Ваше первое взаимодействие с клиентом задаёт тон всем отношениям. 
+      Вот наш подход к тому, чтобы сделать его тёплым, профессиональным и эффективным.
       
-      The Golden Rules:
-      1. Be genuinely interested in helping
-      2. Listen more than you talk
-      3. Never pressure or rush the customer
-      4. Always leave them feeling positive about На Счастье
+      Золотые правила:
+      1. Будьте искренне заинтересованы в помощи
+      2. Слушайте больше, чем говорите
+      3. Никогда не давите и не торопите клиента
+      4. Всегда оставляйте клиента с позитивным ощущением о На Счастье
       
-      Sample Opening Script:
+      Пример открывающего скрипта:
       
-      "Hello [Customer Name], this is [Your Name] from На Счастье! 
+      "Здравствуйте, [Имя Клиента], это [Ваше Имя] из компании На Счастье! 
       
-      I noticed you expressed interest in [specific product/service]. I wanted to reach 
-      out personally to see how I can help you.
+      Я заметил, что вы проявили интерес к [конкретному продукту/услуге]. Я хотел 
+      лично связаться с вами, чтобы узнать, как я могу помочь.
       
-      Is now a good time to chat for a few minutes? If not, I'm happy to schedule a 
-      time that works better for you."
+      У вас есть несколько минут для разговора? Если нет, я буду рад запланировать 
+      время, которое вам подходит."
       
-      Key Conversation Flow:
+      Ключевой поток разговора:
       
-      1. Introduction (30 seconds)
-         - Your name and role
-         - Company introduction
-         - Acknowledge their interest
+      1. Представление (30 секунд)
+         - Ваше имя и роль
+         - Представление компании
+         - Подтверждение их интереса
       
-      2. Permission to Continue (15 seconds)
-         - Check if timing is good
-         - Show respect for their time
-         - Offer flexibility
+      2. Разрешение продолжить (15 секунд)
+         - Проверьте, удобно ли время
+         - Покажите уважение к их времени
+         - Предложите гибкость
       
-      3. Discovery Questions (3-5 minutes)
-         - "What prompted your interest in [product/service]?"
-         - "What are you hoping to achieve?"
-         - "Have you worked with similar solutions before?"
-         - "What's most important to you in making this decision?"
+      3. Вопросы для выявления потребностей (3-5 минут)
+         - "Что побудило ваш интерес к [продукту/услуге]?"
+         - "Чего вы надеетесь достичь?"
+         - "Работали ли вы с похожими решениями раньше?"
+         - "Что для вас наиболее важно при принятии этого решения?"
       
-      4. Value Statement (1-2 minutes)
-         - Brief overview of how we can help
-         - Highlight relevant benefits
-         - Share a quick success story if relevant
+      4. Заявление о ценности (1-2 минуты)
+         - Краткий обзор того, как мы можем помочь
+         - Подчёркивание релевантных преимуществ
+         - Поделитесь быстрой историей успеха, если релевантно
       
-      5. Next Steps (1 minute)
-         - Propose clear action items
-         - Set expectations for follow-up
-         - Provide your contact information
+      5. Следующие шаги (1 минута)
+         - Предложите чёткие пункты действий
+         - Установите ожидания для последующих действий
+         - Предоставьте вашу контактную информацию
       
-      Sample Closing:
+      Пример закрытия:
       
-      "Thank you so much for your time today, [Customer Name]. Based on what you've 
-      shared, I think we can really help you with [specific need]. 
+      "Большое спасибо за ваше время сегодня, [Имя Клиента]. Основываясь на том, что вы 
+      поделились, я думаю, мы действительно можем помочь вам с [конкретной потребностью]. 
       
-      I'll send you [specific resource/proposal] by [specific date], and let's plan 
-      to connect again on [proposed date] to discuss further.
+      Я отправлю вам [конкретный ресурс/предложение] к [конкретной дате], и давайте 
+      запланируем связаться снова [предложенная дата] для дальнейшего обсуждения.
       
-      Does that work for you? And please don't hesitate to reach out if you have 
-      any questions in the meantime!"
+      Это вам подходит? И, пожалуйста, не стесняйтесь связываться, если у вас есть 
+      какие-либо вопросы в это время!"
       
-      Remember: Authenticity beats script perfection. Use these as guidelines, 
-      but always be yourself and genuinely care about helping the customer.
+      Помните: аутентичность важнее совершенства скрипта. Используйте это как руководство, 
+      но всегда будьте собой и искренне заботьтесь о помощи клиенту.
     duration_minutes: 30
     order: 2
 
   - id: "m3_l3"
-    title: "Handling Objections with Grace"
+    title: "Работа с возражениями с изяществом"
     type: "text"
     content: |
-      Turning Objections into Opportunities
+      Превращение возражений в возможности
       
-      Objections are not rejections—they're requests for more information. Every objection 
-      is an opportunity to build trust and understanding.
+      Возражения — это не отказы, это запросы на дополнительную информацию. Каждое возражение 
+      — это возможность построить доверие и понимание.
       
-      Common Objections and Responses:
+      Распространённые возражения и ответы:
       
-      1. "It's too expensive"
-         Understand: What is their budget? What are they comparing to?
-         Response: "I understand budget is important. Let me help you see the value and 
-         explore options that might work better for you. What specific concerns do you 
-         have about the investment?"
+      1. "Это слишком дорого"
+         Понять: Каков их бюджет? С чем они сравнивают?
+         Ответ: "Я понимаю, бюджет важен. Позвольте мне помочь вам увидеть ценность и 
+         изучить варианты, которые могут лучше подойти вам. Какие конкретные опасения у вас 
+         есть относительно инвестиций?"
       
-      2. "I need to think about it"
-         Understand: What specifically needs consideration? What's holding them back?
-         Response: "Absolutely, this is an important decision. To help you in your 
-         thinking, what specific aspects would you like more information about?"
+      2. "Мне нужно подумать об этом"
+         Понять: Что конкретно требует рассмотрения? Что их удерживает?
+         Ответ: "Абсолютно, это важное решение. Чтобы помочь вам в размышлениях, какая 
+         конкретная информация вам нужна?"
       
-      3. "I'm working with another provider"
-         Understand: How satisfied are they? What would make them consider switching?
-         Response: "That's great that you have a provider. I'm curious, what made you 
-         reach out to us? Perhaps we can offer something complementary or different?"
+      3. "Я работаю с другим поставщиком"
+         Понять: Насколько они довольны? Что заставило бы их рассмотреть переход?
+         Ответ: "Это здорово, что у вас есть поставщик. Мне любопытно, что заставило вас 
+         обратиться к нам? Возможно, мы можем предложить что-то дополнительное или другое?"
       
-      4. "Now isn't the right time"
-         Understand: When would be the right time? What needs to change?
-         Response: "I appreciate you being upfront about timing. What would need to 
-         happen for this to become a priority? I'd love to stay in touch and follow 
-         up when the timing is better."
+      4. "Сейчас не подходящее время"
+         Понять: Когда было бы подходящее время? Что должно измениться?
+         Ответ: "Я ценю вашу прямоту о времени. Что должно произойти, чтобы это стало 
+         приоритетом? Я бы хотел оставаться на связи и связаться, когда время будет лучше."
       
-      5. "I don't have authority to decide"
-         Understand: Who does? What's the decision process?
-         Response: "I understand. Who else should be involved in this conversation? 
-         I'm happy to provide information that you can share with decision-makers, 
-         or we can schedule a call together."
+      5. "У меня нет полномочий решать"
+         Понять: У кого есть? Каков процесс принятия решений?
+         Ответ: "Я понимаю. Кто ещё должен быть вовлечён в этот разговор? 
+         Я буду рад предоставить информацию, которой вы можете поделиться с лицами, принимающими 
+         решения, или мы можем запланировать звонок вместе."
       
-      The F.E.E.L. Framework for Objections:
+      Фреймворк Ч.Ч.О.Д. для возражений:
       
-      F - Feel: "I understand how you feel..."
-      E - Felt: "Others have felt the same way..."
-      E - Experience: "What they experienced was..."
-      L - Let's: "Let's explore how this could work for you..."
+      Ч - Чувствую: "Я понимаю, как вы чувствуете..."
+      Ч - Чувствовали: "Другие чувствовали то же самое..."
+      О - Опыт: "То, что они испытали, было..."
+      Д - Давайте: "Давайте исследуем, как это может сработать для вас..."
       
-      Key Principles:
-      - Never argue or get defensive
-      - Acknowledge their concern as valid
-      - Ask questions to understand deeper
-      - Provide information, not pressure
-      - Know when to gracefully step back
+      Ключевые принципы:
+      - Никогда не спорьте и не защищайтесь
+      - Признайте их опасение как обоснованное
+      - Задавайте вопросы для более глубокого понимания
+      - Предоставляйте информацию, а не давление
+      - Знайте, когда изящно отступить
       
-      Remember: Some objections can't be overcome, and that's okay. Our reputation 
-      for being respectful and understanding is more valuable than any single sale.
+      Помните: некоторые возражения невозможно преодолеть, и это нормально. Наша репутация 
+      быть уважительными и понимающими ценнее любой отдельной продажи.
+      
+      Техника мягких допродаж 1→1.5→4:
+      Начните с одной песни, предложите полторы (песня + фото), затем покажите ценность 
+      пакета из 4 песен. Всегда фокусируйтесь на потребностях клиента, а не на размере чека.
     duration_minutes: 30
     order: 3
 
 tests:
   - id: "m3_test1"
-    title: "Sales Funnel Quiz"
+    title: "Тест по воронке продаж"
     passing_score: 80
     questions:
       - id: "q1"
         type: "single"
-        question: "What is S0 in the sales funnel?"
+        question: "Что такое S0 в воронке продаж?"
         options:
-          - "First contact with customer"
-          - "Lead created / new lead"
-          - "Sending demo"
-          - "Final payment"
+          - "Первый контакт с клиентом"
+          - "Лид создан / новый лид"
+          - "Отправка демо"
+          - "Финальный платёж"
         correct_index: 1
 
       - id: "q2"
         type: "single"
-        question: "What should you do MOST during the first contact?"
+        question: "Что вы должны делать БОЛЬШЕ ВСЕГО во время первого контакта?"
         options:
-          - "Talk about all our products"
-          - "Close the sale immediately"
-          - "Listen more than you talk"
-          - "Send them to the website"
+          - "Говорить обо всех наших продуктах"
+          - "Немедленно закрыть продажу"
+          - "Слушать больше, чем говорить"
+          - "Отправить их на сайт"
         correct_index: 2
 
       - id: "q3"
         type: "single"
-        question: "When a customer says 'It's too expensive', what should you do first?"
+        question: "Когда клиент говорит 'Это слишком дорого', что вы должны сделать сначала?"
         options:
-          - "Immediately offer a discount"
-          - "Tell them competitors are more expensive"
-          - "Understand their budget and concerns"
-          - "End the conversation"
+          - "Немедленно предложить скидку"
+          - "Сказать, что конкуренты дороже"
+          - "Понять их бюджет и опасения"
+          - "Завершить разговор"
         correct_index: 2
 
       - id: "q4"
         type: "single"
-        question: "What does S9 represent in the sales funnel?"
+        question: "Что представляет S9 в воронке продаж?"
         options:
-          - "First contact made"
-          - "Proposal sent"
-          - "Closed Won / Successful completion"
-          - "Negotiation phase"
+          - "Первый контакт установлен"
+          - "Предложение отправлено"
+          - "Закрыто/Выиграно / Успешное завершение"
+          - "Фаза переговоров"
         correct_index: 2
 
       - id: "q5"
         type: "single"
-        question: "What is the most important principle when handling objections?"
+        question: "Какой самый важный принцип при работе с возражениями?"
         options:
-          - "Always offer a discount"
-          - "Never argue or get defensive"
-          - "Pressure them to decide quickly"
-          - "Move on to another customer"
+          - "Всегда предлагать скидку"
+          - "Никогда не спорить и не защищаться"
+          - "Давить на них, чтобы они решили быстро"
+          - "Перейти к другому клиенту"
         correct_index: 1

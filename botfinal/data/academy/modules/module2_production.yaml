@@ -1,243 +1,245 @@
 id: "module2_production"
-title: "Module 2 — Production & Quality Standards"
-description: "Learn our production processes, quality control, and excellence standards"
-roles: ["production", "quality"]
+title: "Модуль 2 — Продакшн и стандарты качества"
+description: "Изучите наши производственные процессы, контроль качества и стандарты превосходства"
+roles: ["generator"]
+f_block: "F3"
+products: ["P1", "P2", "P3", "P5"]
 level: 1
 estimated_duration_minutes: 75
 
 lessons:
   - id: "m2_l1"
-    title: "Quality is Everything"
+    title: "Качество — это всё"
     type: "text"
     content: |
-      Quality: The Heart of На Счастье
+      Качество: сердце компании На Счастье
       
-      At На Счастье, quality isn't just a goal—it's who we are. Every product, every 
-      interaction, every detail reflects our commitment to excellence.
+      В компании На Счастье качество — это не просто цель, это то, кто мы есть. Каждый продукт, 
+      каждое взаимодействие, каждая деталь отражает нашу приверженность превосходству.
       
-      Why Quality Matters:
-      - Customer Trust: Quality builds lasting relationships
-      - Brand Reputation: Our name stands for excellence
-      - Team Pride: We're proud of what we create
-      - Sustainable Growth: Quality creates loyal customers
+      Почему качество важно:
+      - Доверие клиента: качество строит долгосрочные отношения
+      - Репутация бренда: наше имя означает превосходство
+      - Гордость команды: мы гордимся тем, что создаём
+      - Устойчивый рост: качество создаёт лояльных клиентов
       
-      Our Quality Philosophy:
-      "Do it right the first time, every time."
+      Наша философия качества:
+      "Делай правильно с первого раза, каждый раз."
       
-      This means:
-      - Never rushing to meet deadlines at the expense of quality
-      - Speaking up when you see potential issues
-      - Taking ownership of your work
-      - Continuous improvement in every process
+      Это означает:
+      - Никогда не спешить ради сроков в ущерб качеству
+      - Высказываться, когда видишь потенциальные проблемы
+      - Брать ответственность за свою работу
+      - Постоянное улучшение в каждом процессе
       
-      Quality Starts with You:
-      Every team member is responsible for quality. Whether you're on the production 
-      floor, in the warehouse, or in the office, your attention to detail matters.
+      Качество начинается с вас:
+      Каждый член команды отвечает за качество. Независимо от того, работаете ли вы в продакшене, 
+      на складе или в офисе, ваше внимание к деталям имеет значение.
       
-      Remember: A customer may forget what we said, but they'll never forget how our 
-      products made them feel. Let's make sure that feeling is always positive.
+      Помните: клиент может забыть, что мы сказали, но никогда не забудет, какие чувства вызвали 
+      наши продукты. Давайте убедимся, что эти чувства всегда позитивные.
     duration_minutes: 20
     order: 1
 
   - id: "m2_l2"
-    title: "Standard Operating Procedures (SOPs)"
+    title: "Стандартные операционные процедуры (СОП)"
     type: "text"
     content: |
-      Understanding Our SOPs
+      Понимание наших СОП
       
-      Standard Operating Procedures (SOPs) are the backbone of consistent quality. 
-      They ensure that every product meets our standards, regardless of who makes it 
-      or when it's made.
+      Стандартные операционные процедуры (СОП) — это основа стабильного качества. 
+      Они гарантируют, что каждый продукт соответствует нашим стандартам, независимо от того, 
+      кто его создаёт и когда.
       
-      Why We Use SOPs:
-      - Consistency: Same high quality every time
-      - Training: Clear guidelines for everyone
-      - Efficiency: Proven processes save time
-      - Quality Control: Easy to spot deviations
+      Зачем мы используем СОП:
+      - Последовательность: одинаково высокое качество каждый раз
+      - Обучение: чёткие руководства для всех
+      - Эффективность: проверенные процессы экономят время
+      - Контроль качества: легко обнаружить отклонения
       
-      Key Production SOPs:
+      Ключевые производственные СОП:
       
-      1. Material Reception & Inspection
-         - Check all incoming materials
-         - Verify quality against specifications
-         - Document any issues immediately
-         - Store properly to maintain quality
+      1. Приёмка и проверка материалов
+         - Проверяйте все входящие материалы
+         - Проверяйте качество по спецификациям
+         - Немедленно документируйте любые проблемы
+         - Храните правильно для поддержания качества
       
-      2. Production Setup
-         - Clean and prepare workspace
-         - Gather all necessary materials and tools
-         - Review production specifications
-         - Double-check measurements and settings
+      2. Настройка производства
+         - Очистите и подготовьте рабочее пространство
+         - Соберите все необходимые материалы и инструменты
+         - Изучите производственные спецификации
+         - Дважды проверьте измерения и настройки
       
-      3. In-Process Quality Checks
-         - Regular inspections during production
-         - Immediate correction of any issues
-         - Documentation of all quality checks
-         - Never skip steps to save time
+      3. Проверки качества в процессе
+         - Регулярные проверки во время производства
+         - Немедленное исправление любых проблем
+         - Документирование всех проверок качества
+         - Никогда не пропускайте шаги для экономии времени
       
-      4. Final Inspection
-         - Complete quality checklist
-         - Visual and functional testing
-         - Packaging verification
-         - Sign-off by quality inspector
+      4. Финальная проверка
+         - Заполните контрольный список качества
+         - Визуальная и функциональная проверка
+         - Проверка упаковки
+         - Подпись инспектора по качеству
       
-      5. Documentation
-         - Record all production data
-         - Note any deviations or issues
-         - Track materials and batch numbers
-         - Maintain clear, accurate records
+      5. Документация
+         - Записывайте все производственные данные
+         - Отмечайте любые отклонения или проблемы
+         - Отслеживайте материалы и номера партий
+         - Ведите чёткие, точные записи
       
-      Following SOPs is NOT Optional:
-      - SOPs are developed through experience and best practices
-      - Skipping steps puts quality at risk
-      - If you think an SOP needs improvement, suggest it—but follow it until changed
-      - When in doubt, always follow the SOP and ask questions
+      Соблюдение СОП НЕ является опциональным:
+      - СОП разработаны на основе опыта и лучших практик
+      - Пропуск шагов ставит качество под угрозу
+      - Если вы считаете, что СОП нуждается в улучшении, предложите это — но следуйте ему до изменения
+      - При сомнении всегда следуйте СОП и задавайте вопросы
       
-      Remember: SOPs protect you, protect quality, and protect our customers.
+      Помните: СОП защищают вас, защищают качество и защищают наших клиентов.
     duration_minutes: 30
     order: 2
 
   - id: "m2_l3"
-    title: "Quality Control Checkpoints"
+    title: "Контрольные точки качества"
     type: "text"
     content: |
-      Quality Control: Our Safety Net
+      Контроль качества: наша страховочная сеть
       
-      Quality Control (QC) is our systematic approach to ensuring excellence. Through 
-      multiple checkpoints, we catch and correct issues before they reach customers.
+      Контроль качества (КК) — это наш систематический подход к обеспечению превосходства. 
+      Через множество контрольных точек мы обнаруживаем и исправляем проблемы до того, 
+      как они достигнут клиентов.
       
-      The Three Lines of Defense:
+      Три линии защиты:
       
-      1. Self-Inspection (First Line)
-         - Every team member checks their own work
-         - Catch issues immediately
-         - Take pride in personal quality
-         - Don't pass problems downstream
+      1. Самопроверка (Первая линия)
+         - Каждый член команды проверяет свою собственную работу
+         - Обнаруживайте проблемы немедленно
+         - Гордитесь личным качеством
+         - Не передавайте проблемы дальше
       
-      2. Peer Review (Second Line)
-         - Colleague verifies your work
-         - Fresh eyes catch what you might miss
-         - Team accountability
-         - Learning opportunity for both parties
+      2. Проверка коллегами (Вторая линия)
+         - Коллега проверяет вашу работу
+         - Свежий взгляд замечает то, что вы могли пропустить
+         - Командная ответственность
+         - Возможность обучения для обеих сторон
       
-      3. QC Inspector (Third Line)
-         - Final independent verification
-         - Uses standardized checklist
-         - Authority to stop shipment
-         - Documents all findings
+      3. Инспектор КК (Третья линия)
+         - Финальная независимая проверка
+         - Использует стандартизированный контрольный список
+         - Полномочия остановить отгрузку
+         - Документирует все находки
       
-      Common Quality Checkpoints:
+      Распространённые контрольные точки качества:
       
-      Material Quality:
-      - Visual inspection for defects
-      - Measurement verification
-      - Color/texture consistency
-      - Expiration date checks
+      Качество материалов:
+      - Визуальная проверка на дефекты
+      - Проверка измерений
+      - Постоянство цвета/текстуры
+      - Проверка срока годности
       
-      Production Quality:
-      - Dimensional accuracy
-      - Assembly verification
-      - Functional testing
-      - Finish quality
+      Качество производства:
+      - Точность размеров
+      - Проверка сборки
+      - Функциональное тестирование
+      - Качество отделки
       
-      Packaging Quality:
-      - Correct product in correct package
-      - Labels accurate and properly placed
-      - Packaging undamaged
-      - All components included
+      Качество упаковки:
+      - Правильный продукт в правильной упаковке
+      - Этикетки точные и правильно размещены
+      - Упаковка неповреждённая
+      - Все компоненты включены
       
-      When You Find a Quality Issue:
+      Когда вы находите проблему качества:
       
-      1. STOP: Don't continue if quality is compromised
-      2. TAG: Mark the item clearly as "Hold for Inspection"
-      3. REPORT: Notify your supervisor immediately
-      4. DOCUMENT: Record what you found and when
-      5. LEARN: Understand the root cause to prevent recurrence
+      1. СТОП: не продолжайте, если качество под угрозой
+      2. ПОМЕТИТЬ: чётко отметьте предмет как "Удержать для проверки"
+      3. СООБЩИТЬ: немедленно уведомите вашего руководителя
+      4. ДОКУМЕНТИРОВАТЬ: запишите, что вы обнаружили и когда
+      5. УЧИТЬСЯ: поймите первопричину, чтобы предотвратить повторение
       
-      The Cost of Quality Issues:
-      - Rework takes time and resources
-      - Returns damage customer relationships
-      - Waste impacts profitability
-      - Reputation takes years to build, seconds to damage
+      Стоимость проблем качества:
+      - Переделка отнимает время и ресурсы
+      - Возвраты вредят отношениям с клиентами
+      - Отходы влияют на прибыльность
+      - Репутация строится годами, разрушается за секунды
       
-      Quality Wins:
-      When we catch an issue before it ships:
-      - Customer trust is maintained
-      - Costs are minimized
-      - Team learns and improves
-      - Everyone celebrates preventing a problem
+      Победы качества:
+      Когда мы обнаруживаем проблему до отгрузки:
+      - Доверие клиента сохраняется
+      - Затраты минимизируются
+      - Команда учится и улучшается
+      - Все празднуют предотвращение проблемы
       
-      Your Role:
-      You are a quality guardian. Your attention, diligence, and commitment to 
-      excellence ensure that every customer receives the На Счастье experience 
-      they deserve.
+      Ваша роль:
+      Вы — страж качества. Ваше внимание, усердие и приверженность превосходству 
+      гарантируют, что каждый клиент получает опыт На Счастье, который он заслуживает.
       
-      Remember: It's always better to take an extra minute to verify quality than 
-      to spend hours fixing problems later.
+      Помните: всегда лучше потратить дополнительную минуту на проверку качества, чем 
+      часы на исправление проблем позже.
     duration_minutes: 25
     order: 3
 
 tests:
   - id: "m2_test1"
-    title: "Production & Quality Quiz"
+    title: "Тест по продакшену и качеству"
     passing_score: 75
     questions:
       - id: "q1"
         type: "single"
-        question: "What is our quality philosophy at На Счастье?"
+        question: "Какова наша философия качества в компании На Счастье?"
         options:
-          - "Do it fast and fix issues later"
-          - "Do it right the first time, every time"
-          - "Quality is the inspector's responsibility"
-          - "Good enough is acceptable"
+          - "Делай быстро и исправляй проблемы позже"
+          - "Делай правильно с первого раза, каждый раз"
+          - "Качество — ответственность инспектора"
+          - "Достаточно хорошо — приемлемо"
         correct_index: 1
 
       - id: "q2"
         type: "single"
-        question: "Why do we use Standard Operating Procedures (SOPs)?"
+        question: "Зачем мы используем стандартные операционные процедуры (СОП)?"
         options:
-          - "To make work more complicated"
-          - "To ensure consistency and quality"
-          - "Because management requires it"
-          - "To slow down production"
+          - "Чтобы усложнить работу"
+          - "Чтобы обеспечить последовательность и качество"
+          - "Потому что руководство требует этого"
+          - "Чтобы замедлить производство"
         correct_index: 1
 
       - id: "q3"
         type: "single"
-        question: "What are the three lines of defense in our QC process?"
+        question: "Каковы три линии защиты в нашем процессе КК?"
         options:
-          - "Manager, Supervisor, Worker"
-          - "Morning, Afternoon, Evening checks"
-          - "Self-Inspection, Peer Review, QC Inspector"
-          - "Visual, Measurement, Functional"
+          - "Менеджер, Супервайзер, Работник"
+          - "Утро, День, Вечер проверки"
+          - "Самопроверка, Проверка коллегами, Инспектор КК"
+          - "Визуальная, Измерительная, Функциональная"
         correct_index: 2
 
       - id: "q4"
         type: "single"
-        question: "What should you do when you find a quality issue?"
+        question: "Что вы должны делать, когда находите проблему качества?"
         options:
-          - "Ignore it if it's minor"
-          - "Fix it quickly and don't tell anyone"
-          - "STOP, TAG, REPORT, DOCUMENT, LEARN"
-          - "Continue working and mention it later"
+          - "Игнорировать, если она незначительная"
+          - "Быстро исправить и никому не говорить"
+          - "СТОП, ПОМЕТИТЬ, СООБЩИТЬ, ДОКУМЕНТИРОВАТЬ, УЧИТЬСЯ"
+          - "Продолжать работать и упомянуть позже"
         correct_index: 2
 
       - id: "q5"
         type: "single"
-        question: "Who is responsible for quality in our production process?"
+        question: "Кто отвечает за качество в нашем производственном процессе?"
         options:
-          - "Only the QC inspectors"
-          - "Only the production manager"
-          - "Every team member"
-          - "Only senior staff"
+          - "Только инспекторы КК"
+          - "Только менеджер производства"
+          - "Каждый член команды"
+          - "Только старший персонал"
         correct_index: 2
 
       - id: "q6"
         type: "single"
-        question: "What is the first checkpoint in our quality control?"
+        question: "Что является первой контрольной точкой в нашем контроле качества?"
         options:
-          - "Customer inspection"
-          - "Manager approval"
-          - "Self-inspection"
-          - "Final QC review"
+          - "Проверка клиентом"
+          - "Одобрение менеджера"
+          - "Самопроверка"
+          - "Финальная проверка КК"
         correct_index: 2

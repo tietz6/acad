@@ -42,7 +42,9 @@ class AcademyService:
                 roles=m.roles,
                 level=m.level,
                 lessons_count=len(m.lessons),
-                tests_count=len(m.tests)
+                tests_count=len(m.tests),
+                f_block=m.f_block,
+                products=m.products
             )
             for m in modules
         ]

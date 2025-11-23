@@ -1,119 +1,121 @@
 id: "module1_intro"
-title: "Module 1 — Introduction to На Счастье"
-description: "Welcome module introducing our company culture, values, and mission"
-roles: ["sales", "production", "marketing", "support"]
+title: "Модуль 1 — Введение в компанию На Счастье"
+description: "Приветственный модуль: культура компании, ценности и миссия"
+roles: ["all"]
+f_block: "F1"
+products: ["P1", "P2", "P3", "P4", "P5"]
 level: 1
 estimated_duration_minutes: 45
 
 lessons:
   - id: "m1_l1"
-    title: "Welcome to На Счастье"
+    title: "Добро пожаловать в На Счастье"
     type: "text"
     content: |
-      Welcome to На Счастье! 
+      Добро пожаловать в На Счастье! 
       
-      We are delighted to have you join our team. This training system will help you learn 
-      everything you need to know about our company, products, and processes.
+      Мы рады приветствовать вас в нашей команде. Эта обучающая система поможет вам узнать 
+      всё необходимое о нашей компании, продуктах и процессах.
       
-      Our Mission:
-      To bring happiness and quality to every customer interaction. We believe that genuine 
-      care and attention to detail create lasting relationships.
+      Наша миссия:
+      Приносить счастье и качество в каждое взаимодействие с клиентом. Мы верим, что 
+      искренняя забота и внимание к деталям создают долгосрочные отношения.
       
-      Our Values:
-      - Customer First: Every decision starts with the customer's needs
-      - Quality Excellence: We never compromise on quality
-      - Team Spirit: We support and grow together
-      - Continuous Learning: Every day is an opportunity to improve
+      Наши ценности:
+      - Клиент на первом месте: каждое решение начинается с потребностей клиента
+      - Превосходство качества: мы никогда не идём на компромиссы в качестве
+      - Командный дух: мы поддерживаем друг друга и растём вместе
+      - Постоянное обучение: каждый день — возможность стать лучше
       
-      This academy is your personal guide to success at На Счастье. Take your time with 
-      each module, and don't hesitate to revisit lessons as needed.
+      Эта академия — ваш личный путеводитель к успеху в На Счастье. Не торопитесь, 
+      изучайте каждый модуль внимательно и возвращайтесь к урокам при необходимости.
     duration_minutes: 15
     order: 1
 
   - id: "m1_l2"
-    title: "Our Company History"
+    title: "История нашей компании"
     type: "text"
     content: |
-      The Story of На Счастье
+      История На Счастье
       
-      Founded in 2020, На Счастье started with a simple idea: treat every customer 
-      like family. What began as a small team of 5 passionate individuals has grown 
-      into a thriving company serving thousands of happy customers.
+      Основанная в 2020 году, компания На Счастье началась с простой идеи: относиться к 
+      каждому клиенту как к члену семьи. То, что начиналось как небольшая команда из 5 
+      увлечённых людей, выросло в процветающую компанию, обслуживающую тысячи довольных клиентов.
       
-      Key Milestones:
-      - 2020: Company founded with focus on personalized service
-      - 2021: Expanded to 3 new cities
-      - 2022: Launched our training academy
-      - 2023: Reached 10,000 satisfied customers
-      - 2024: Introduced innovative product line
-      - 2025: Continuing to grow and serve with excellence
+      Ключевые вехи:
+      - 2020: Основание компании с фокусом на персонализированном обслуживании
+      - 2021: Расширение на 3 новых города
+      - 2022: Запуск нашей обучающей академии
+      - 2023: Достигли отметки 10,000 довольных клиентов
+      - 2024: Представили инновационную линейку продуктов
+      - 2025: Продолжаем расти и служить с превосходством
       
-      Throughout our journey, one thing has remained constant: our commitment to 
-      bringing happiness to everyone we serve.
+      На протяжении всего нашего пути одно оставалось неизменным: наша приверженность 
+      приносить счастье каждому, кому мы служим.
     duration_minutes: 15
     order: 2
 
   - id: "m1_l3"
-    title: "Team Structure and Roles"
+    title: "Структура команды и роли"
     type: "text"
     content: |
-      Understanding Our Team Structure
+      Понимание структуры нашей команды
       
-      At На Счастье, we have several key departments working together:
+      В компании На Счастье работают несколько ключевых отделов:
       
-      Sales Team:
-      - Handle customer inquiries and consultations
-      - Guide customers through our product selection
-      - Build long-term customer relationships
+      Команда продаж (менеджеры):
+      - Обрабатывают запросы клиентов и проводят консультации
+      - Помогают клиентам выбрать наши продукты
+      - Выстраивают долгосрочные отношения с клиентами
       
-      Production Team:
-      - Ensure quality in every product
-      - Manage inventory and logistics
-      - Maintain our high standards
+      Команда продакшена (генераторы):
+      - Обеспечивают качество каждого продукта (песни, анимация, монтаж)
+      - Управляют процессом создания контента
+      - Поддерживают наши высокие стандарты
       
-      Marketing Team:
-      - Create engaging content
-      - Manage social media and campaigns
-      - Analyze market trends
+      Команда маркетинга:
+      - Создают увлекательный контент
+      - Управляют социальными сетями и кампаниями
+      - Анализируют рыночные тенденции
       
-      Support Team:
-      - Provide post-sale assistance
-      - Handle customer questions and concerns
-      - Ensure customer satisfaction
+      Команда поддержки:
+      - Предоставляют помощь после продажи
+      - Отвечают на вопросы и решают проблемы клиентов
+      - Обеспечивают удовлетворённость клиентов
       
-      Everyone plays a vital role in our success. We work as one unified team 
-      with a shared goal: customer happiness.
+      Каждый играет важную роль в нашем успехе. Мы работаем как единая команда 
+      с общей целью: счастье клиента.
     duration_minutes: 15
     order: 3
 
 tests:
   - id: "m1_test1"
-    title: "Introduction Module Quiz"
+    title: "Тест по вводному модулю"
     passing_score: 70
     questions:
       - id: "q1"
         type: "single"
-        question: "What is the primary mission of На Счастье?"
+        question: "Какова основная миссия компании На Счастье?"
         options:
-          - "To maximize profits at any cost"
-          - "To bring happiness and quality to every customer interaction"
-          - "To be the biggest company in the industry"
-          - "To work as fast as possible"
+          - "Максимизировать прибыль любой ценой"
+          - "Приносить счастье и качество в каждое взаимодействие с клиентом"
+          - "Стать самой большой компанией в отрасли"
+          - "Работать как можно быстрее"
         correct_index: 1
 
       - id: "q2"
         type: "single"
-        question: "Which of the following is NOT one of our core values?"
+        question: "Что из перечисленного НЕ является нашей основной ценностью?"
         options:
-          - "Customer First"
-          - "Quality Excellence"
-          - "Cutting Corners"
-          - "Team Spirit"
+          - "Клиент на первом месте"
+          - "Превосходство качества"
+          - "Срезание углов"
+          - "Командный дух"
         correct_index: 2
 
       - id: "q3"
         type: "single"
-        question: "When was На Счастье founded?"
+        question: "Когда была основана компания На Счастье?"
         options:
           - "2018"
           - "2019"
@@ -123,10 +125,10 @@ tests:
 
       - id: "q4"
         type: "single"
-        question: "What is the role of the Sales Team?"
+        question: "Какова роль команды продаж?"
         options:
-          - "Manage inventory and logistics"
-          - "Create engaging content"
-          - "Handle customer inquiries and build relationships"
-          - "Provide technical support only"
+          - "Управление инвентарём и логистикой"
+          - "Создание увлекательного контента"
+          - "Обработка запросов клиентов и построение отношений"
+          - "Только техническая поддержка"
         correct_index: 2

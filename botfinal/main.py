@@ -112,10 +112,17 @@ async def health_check():
 
 # Voice/TTS endpoints (existing core functionality)
 @app.post("/voice/v1/tts")
-async def text_to_speech(text: str, voice_type: str = "default"):
+async def text_to_speech(text: str, voice_type: str = "ru_female"):
     """
     Text-to-speech endpoint
     Converts text to audio file and returns the file path or audio data
+    
+    Args:
+        text: Text to convert to speech
+        voice_type: Voice type (ru_female, ru_male, default)
+    
+    Returns:
+        Audio URL and metadata
     """
     try:
         # Create audio directory if it doesn't exist
@@ -126,14 +133,28 @@ async def text_to_speech(text: str, voice_type: str = "default"):
         filename = f"{uuid.uuid4()}.mp3"
         filepath = audio_dir / filename
         
+        # Determine language and settings based on voice_type
+        # Note: gTTS doesn't support different Russian voices, but we accept the parameter
+        # for future extensibility
+        if voice_type.startswith('ru_') or voice_type == 'russian':
+            lang = 'ru'
+            slow = False
+        else:
+            lang = 'en'
+            slow = False
+        
         # Generate TTS
-        tts = gTTS(text=text, lang='ru' if voice_type == 'russian' else 'en', slow=False)
+        tts = gTTS(text=text, lang=lang, slow=slow)
         tts.save(str(filepath))
+        
+        logger.info(f"Generated TTS audio: {filename} (voice: {voice_type}, lang: {lang})")
         
         return {
             "success": True,
             "audio_url": f"/voice/v1/audio/{filename}",
-            "file_path": str(filepath)
+            "file_path": str(filepath),
+            "voice_type": voice_type,
+            "language": lang
         }
     except Exception as e:
         logger.error(f"TTS generation failed: {e}", exc_info=True)
