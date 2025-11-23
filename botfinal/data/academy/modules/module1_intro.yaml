@@ -1,0 +1,132 @@
+id: "module1_intro"
+title: "Module 1 — Introduction to На Счастье"
+description: "Welcome module introducing our company culture, values, and mission"
+roles: ["sales", "production", "marketing", "support"]
+level: 1
+estimated_duration_minutes: 45
+
+lessons:
+  - id: "m1_l1"
+    title: "Welcome to На Счастье"
+    type: "text"
+    content: |
+      Welcome to На Счастье! 
+      
+      We are delighted to have you join our team. This training system will help you learn 
+      everything you need to know about our company, products, and processes.
+      
+      Our Mission:
+      To bring happiness and quality to every customer interaction. We believe that genuine 
+      care and attention to detail create lasting relationships.
+      
+      Our Values:
+      - Customer First: Every decision starts with the customer's needs
+      - Quality Excellence: We never compromise on quality
+      - Team Spirit: We support and grow together
+      - Continuous Learning: Every day is an opportunity to improve
+      
+      This academy is your personal guide to success at На Счастье. Take your time with 
+      each module, and don't hesitate to revisit lessons as needed.
+    duration_minutes: 15
+    order: 1
+
+  - id: "m1_l2"
+    title: "Our Company History"
+    type: "text"
+    content: |
+      The Story of На Счастье
+      
+      Founded in 2020, На Счастье started with a simple idea: treat every customer 
+      like family. What began as a small team of 5 passionate individuals has grown 
+      into a thriving company serving thousands of happy customers.
+      
+      Key Milestones:
+      - 2020: Company founded with focus on personalized service
+      - 2021: Expanded to 3 new cities
+      - 2022: Launched our training academy
+      - 2023: Reached 10,000 satisfied customers
+      - 2024: Introduced innovative product line
+      - 2025: Continuing to grow and serve with excellence
+      
+      Throughout our journey, one thing has remained constant: our commitment to 
+      bringing happiness to everyone we serve.
+    duration_minutes: 15
+    order: 2
+
+  - id: "m1_l3"
+    title: "Team Structure and Roles"
+    type: "text"
+    content: |
+      Understanding Our Team Structure
+      
+      At На Счастье, we have several key departments working together:
+      
+      Sales Team:
+      - Handle customer inquiries and consultations
+      - Guide customers through our product selection
+      - Build long-term customer relationships
+      
+      Production Team:
+      - Ensure quality in every product
+      - Manage inventory and logistics
+      - Maintain our high standards
+      
+      Marketing Team:
+      - Create engaging content
+      - Manage social media and campaigns
+      - Analyze market trends
+      
+      Support Team:
+      - Provide post-sale assistance
+      - Handle customer questions and concerns
+      - Ensure customer satisfaction
+      
+      Everyone plays a vital role in our success. We work as one unified team 
+      with a shared goal: customer happiness.
+    duration_minutes: 15
+    order: 3
+
+tests:
+  - id: "m1_test1"
+    title: "Introduction Module Quiz"
+    passing_score: 70
+    questions:
+      - id: "q1"
+        type: "single"
+        question: "What is the primary mission of На Счастье?"
+        options:
+          - "To maximize profits at any cost"
+          - "To bring happiness and quality to every customer interaction"
+          - "To be the biggest company in the industry"
+          - "To work as fast as possible"
+        correct_index: 1
+
+      - id: "q2"
+        type: "single"
+        question: "Which of the following is NOT one of our core values?"
+        options:
+          - "Customer First"
+          - "Quality Excellence"
+          - "Cutting Corners"
+          - "Team Spirit"
+        correct_index: 2
+
+      - id: "q3"
+        type: "single"
+        question: "When was На Счастье founded?"
+        options:
+          - "2018"
+          - "2019"
+          - "2020"
+          - "2021"
+        correct_index: 2
+
+      - id: "q4"
+        type: "single"
+        question: "What is the role of the Sales Team?"
+        options:
+          - "Manage inventory and logistics"
+          - "Create engaging content"
+          - "Handle customer inquiries and build relationships"
+          - "Provide technical support only"
+        correct_index: 2
