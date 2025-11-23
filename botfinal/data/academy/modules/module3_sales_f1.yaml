@@ -1,0 +1,255 @@
+id: "module3_sales_f1"
+title: "Module 3 — Sales (F1)"
+description: "How we sell with warmth and without pressure. Master the art of consultative selling."
+roles: ["sales"]
+level: 1
+estimated_duration_minutes: 90
+
+lessons:
+  - id: "m3_l1"
+    title: "Sales Funnel S0–S9"
+    type: "text"
+    content: |
+      Understanding Our Sales Funnel
+      
+      At На Счастье, we use a structured sales funnel to guide customers through their journey. 
+      Each stage is designed to build trust and provide value.
+      
+      The Sales Stages:
+      
+      S0 - Lead Created: A new potential customer enters our system
+      - Source identified (website, referral, social media)
+      - Basic contact information collected
+      - Initial interest noted
+      
+      S1 - First Contact: Initial outreach to the lead
+      - Friendly introduction to На Счастье
+      - Understanding customer's needs
+      - Setting expectations for next steps
+      
+      S2 - Needs Assessment: Deep dive into customer requirements
+      - Active listening to understand pain points
+      - Asking clarifying questions
+      - Identifying the best solution
+      
+      S3 - Solution Presentation: Showing how we can help
+      - Tailored product recommendations
+      - Demonstration of features and benefits
+      - Addressing specific needs identified
+      
+      S4 - Proposal Sent: Formal offer delivered
+      - Detailed pricing and options
+      - Clear terms and conditions
+      - Timeline for decision
+      
+      S5 - Negotiation: Working through details
+      - Addressing concerns and questions
+      - Finding mutually beneficial terms
+      - Building confidence in the partnership
+      
+      S6 - Contract Signed: Agreement finalized
+      - Legal documents completed
+      - Payment terms confirmed
+      - Onboarding process begins
+      
+      S7 - Delivery/Implementation: Solution delivered
+      - Product/service provided as promised
+      - Quality checks completed
+      - Customer trained if needed
+      
+      S8 - Follow-up: Ensuring satisfaction
+      - Checking in with customer
+      - Addressing any issues
+      - Building relationship for future business
+      
+      S9 - Closed Won: Successful completion
+      - Customer satisfied and active
+      - Potential for upsell/cross-sell
+      - Referral opportunities identified
+      
+      Remember: Not every lead reaches S9, and that's okay. Our goal is to provide 
+      value at every stage and maintain positive relationships even if a sale doesn't close.
+    duration_minutes: 30
+    order: 1
+
+  - id: "m3_l2"
+    title: "First Contact Script"
+    type: "text"
+    content: |
+      The Art of the First Contact
+      
+      Your first interaction with a customer sets the tone for the entire relationship. 
+      Here's our approach to making it warm, professional, and effective.
+      
+      The Golden Rules:
+      1. Be genuinely interested in helping
+      2. Listen more than you talk
+      3. Never pressure or rush the customer
+      4. Always leave them feeling positive about На Счастье
+      
+      Sample Opening Script:
+      
+      "Hello [Customer Name], this is [Your Name] from На Счастье! 
+      
+      I noticed you expressed interest in [specific product/service]. I wanted to reach 
+      out personally to see how I can help you.
+      
+      Is now a good time to chat for a few minutes? If not, I'm happy to schedule a 
+      time that works better for you."
+      
+      Key Conversation Flow:
+      
+      1. Introduction (30 seconds)
+         - Your name and role
+         - Company introduction
+         - Acknowledge their interest
+      
+      2. Permission to Continue (15 seconds)
+         - Check if timing is good
+         - Show respect for their time
+         - Offer flexibility
+      
+      3. Discovery Questions (3-5 minutes)
+         - "What prompted your interest in [product/service]?"
+         - "What are you hoping to achieve?"
+         - "Have you worked with similar solutions before?"
+         - "What's most important to you in making this decision?"
+      
+      4. Value Statement (1-2 minutes)
+         - Brief overview of how we can help
+         - Highlight relevant benefits
+         - Share a quick success story if relevant
+      
+      5. Next Steps (1 minute)
+         - Propose clear action items
+         - Set expectations for follow-up
+         - Provide your contact information
+      
+      Sample Closing:
+      
+      "Thank you so much for your time today, [Customer Name]. Based on what you've 
+      shared, I think we can really help you with [specific need]. 
+      
+      I'll send you [specific resource/proposal] by [specific date], and let's plan 
+      to connect again on [proposed date] to discuss further.
+      
+      Does that work for you? And please don't hesitate to reach out if you have 
+      any questions in the meantime!"
+      
+      Remember: Authenticity beats script perfection. Use these as guidelines, 
+      but always be yourself and genuinely care about helping the customer.
+    duration_minutes: 30
+    order: 2
+
+  - id: "m3_l3"
+    title: "Handling Objections with Grace"
+    type: "text"
+    content: |
+      Turning Objections into Opportunities
+      
+      Objections are not rejections—they're requests for more information. Every objection 
+      is an opportunity to build trust and understanding.
+      
+      Common Objections and Responses:
+      
+      1. "It's too expensive"
+         Understand: What is their budget? What are they comparing to?
+         Response: "I understand budget is important. Let me help you see the value and 
+         explore options that might work better for you. What specific concerns do you 
+         have about the investment?"
+      
+      2. "I need to think about it"
+         Understand: What specifically needs consideration? What's holding them back?
+         Response: "Absolutely, this is an important decision. To help you in your 
+         thinking, what specific aspects would you like more information about?"
+      
+      3. "I'm working with another provider"
+         Understand: How satisfied are they? What would make them consider switching?
+         Response: "That's great that you have a provider. I'm curious, what made you 
+         reach out to us? Perhaps we can offer something complementary or different?"
+      
+      4. "Now isn't the right time"
+         Understand: When would be the right time? What needs to change?
+         Response: "I appreciate you being upfront about timing. What would need to 
+         happen for this to become a priority? I'd love to stay in touch and follow 
+         up when the timing is better."
+      
+      5. "I don't have authority to decide"
+         Understand: Who does? What's the decision process?
+         Response: "I understand. Who else should be involved in this conversation? 
+         I'm happy to provide information that you can share with decision-makers, 
+         or we can schedule a call together."
+      
+      The F.E.E.L. Framework for Objections:
+      
+      F - Feel: "I understand how you feel..."
+      E - Felt: "Others have felt the same way..."
+      E - Experience: "What they experienced was..."
+      L - Let's: "Let's explore how this could work for you..."
+      
+      Key Principles:
+      - Never argue or get defensive
+      - Acknowledge their concern as valid
+      - Ask questions to understand deeper
+      - Provide information, not pressure
+      - Know when to gracefully step back
+      
+      Remember: Some objections can't be overcome, and that's okay. Our reputation 
+      for being respectful and understanding is more valuable than any single sale.
+    duration_minutes: 30
+    order: 3
+
+tests:
+  - id: "m3_test1"
+    title: "Sales Funnel Quiz"
+    passing_score: 80
+    questions:
+      - id: "q1"
+        type: "single"
+        question: "What is S0 in the sales funnel?"
+        options:
+          - "First contact with customer"
+          - "Lead created / new lead"
+          - "Sending demo"
+          - "Final payment"
+        correct_index: 1
+
+      - id: "q2"
+        type: "single"
+        question: "What should you do MOST during the first contact?"
+        options:
+          - "Talk about all our products"
+          - "Close the sale immediately"
+          - "Listen more than you talk"
+          - "Send them to the website"
+        correct_index: 2
+
+      - id: "q3"
+        type: "single"
+        question: "When a customer says 'It's too expensive', what should you do first?"
+        options:
+          - "Immediately offer a discount"
+          - "Tell them competitors are more expensive"
+          - "Understand their budget and concerns"
+          - "End the conversation"
+        correct_index: 2
+
+      - id: "q4"
+        type: "single"
+        question: "What does S9 represent in the sales funnel?"
+        options:
+          - "First contact made"
+          - "Proposal sent"
+          - "Closed Won / Successful completion"
+          - "Negotiation phase"
+        correct_index: 2
+
+      - id: "q5"
+        type: "single"
+        question: "What is the most important principle when handling objections?"
+        options:
+          - "Always offer a discount"
+          - "Never argue or get defensive"
+          - "Pressure them to decide quickly"
+          - "Move on to another customer"
+        correct_index: 1

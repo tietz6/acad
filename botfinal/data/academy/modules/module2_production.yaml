@@ -1,0 +1,243 @@
+id: "module2_production"
+title: "Module 2 — Production & Quality Standards"
+description: "Learn our production processes, quality control, and excellence standards"
+roles: ["production", "quality"]
+level: 1
+estimated_duration_minutes: 75
+
+lessons:
+  - id: "m2_l1"
+    title: "Quality is Everything"
+    type: "text"
+    content: |
+      Quality: The Heart of На Счастье
+      
+      At На Счастье, quality isn't just a goal—it's who we are. Every product, every 
+      interaction, every detail reflects our commitment to excellence.
+      
+      Why Quality Matters:
+      - Customer Trust: Quality builds lasting relationships
+      - Brand Reputation: Our name stands for excellence
+      - Team Pride: We're proud of what we create
+      - Sustainable Growth: Quality creates loyal customers
+      
+      Our Quality Philosophy:
+      "Do it right the first time, every time."
+      
+      This means:
+      - Never rushing to meet deadlines at the expense of quality
+      - Speaking up when you see potential issues
+      - Taking ownership of your work
+      - Continuous improvement in every process
+      
+      Quality Starts with You:
+      Every team member is responsible for quality. Whether you're on the production 
+      floor, in the warehouse, or in the office, your attention to detail matters.
+      
+      Remember: A customer may forget what we said, but they'll never forget how our 
+      products made them feel. Let's make sure that feeling is always positive.
+    duration_minutes: 20
+    order: 1
+
+  - id: "m2_l2"
+    title: "Standard Operating Procedures (SOPs)"
+    type: "text"
+    content: |
+      Understanding Our SOPs
+      
+      Standard Operating Procedures (SOPs) are the backbone of consistent quality. 
+      They ensure that every product meets our standards, regardless of who makes it 
+      or when it's made.
+      
+      Why We Use SOPs:
+      - Consistency: Same high quality every time
+      - Training: Clear guidelines for everyone
+      - Efficiency: Proven processes save time
+      - Quality Control: Easy to spot deviations
+      
+      Key Production SOPs:
+      
+      1. Material Reception & Inspection
+         - Check all incoming materials
+         - Verify quality against specifications
+         - Document any issues immediately
+         - Store properly to maintain quality
+      
+      2. Production Setup
+         - Clean and prepare workspace
+         - Gather all necessary materials and tools
+         - Review production specifications
+         - Double-check measurements and settings
+      
+      3. In-Process Quality Checks
+         - Regular inspections during production
+         - Immediate correction of any issues
+         - Documentation of all quality checks
+         - Never skip steps to save time
+      
+      4. Final Inspection
+         - Complete quality checklist
+         - Visual and functional testing
+         - Packaging verification
+         - Sign-off by quality inspector
+      
+      5. Documentation
+         - Record all production data
+         - Note any deviations or issues
+         - Track materials and batch numbers
+         - Maintain clear, accurate records
+      
+      Following SOPs is NOT Optional:
+      - SOPs are developed through experience and best practices
+      - Skipping steps puts quality at risk
+      - If you think an SOP needs improvement, suggest it—but follow it until changed
+      - When in doubt, always follow the SOP and ask questions
+      
+      Remember: SOPs protect you, protect quality, and protect our customers.
+    duration_minutes: 30
+    order: 2
+
+  - id: "m2_l3"
+    title: "Quality Control Checkpoints"
+    type: "text"
+    content: |
+      Quality Control: Our Safety Net
+      
+      Quality Control (QC) is our systematic approach to ensuring excellence. Through 
+      multiple checkpoints, we catch and correct issues before they reach customers.
+      
+      The Three Lines of Defense:
+      
+      1. Self-Inspection (First Line)
+         - Every team member checks their own work
+         - Catch issues immediately
+         - Take pride in personal quality
+         - Don't pass problems downstream
+      
+      2. Peer Review (Second Line)
+         - Colleague verifies your work
+         - Fresh eyes catch what you might miss
+         - Team accountability
+         - Learning opportunity for both parties
+      
+      3. QC Inspector (Third Line)
+         - Final independent verification
+         - Uses standardized checklist
+         - Authority to stop shipment
+         - Documents all findings
+      
+      Common Quality Checkpoints:
+      
+      Material Quality:
+      - Visual inspection for defects
+      - Measurement verification
+      - Color/texture consistency
+      - Expiration date checks
+      
+      Production Quality:
+      - Dimensional accuracy
+      - Assembly verification
+      - Functional testing
+      - Finish quality
+      
+      Packaging Quality:
+      - Correct product in correct package
+      - Labels accurate and properly placed
+      - Packaging undamaged
+      - All components included
+      
+      When You Find a Quality Issue:
+      
+      1. STOP: Don't continue if quality is compromised
+      2. TAG: Mark the item clearly as "Hold for Inspection"
+      3. REPORT: Notify your supervisor immediately
+      4. DOCUMENT: Record what you found and when
+      5. LEARN: Understand the root cause to prevent recurrence
+      
+      The Cost of Quality Issues:
+      - Rework takes time and resources
+      - Returns damage customer relationships
+      - Waste impacts profitability
+      - Reputation takes years to build, seconds to damage
+      
+      Quality Wins:
+      When we catch an issue before it ships:
+      - Customer trust is maintained
+      - Costs are minimized
+      - Team learns and improves
+      - Everyone celebrates preventing a problem
+      
+      Your Role:
+      You are a quality guardian. Your attention, diligence, and commitment to 
+      excellence ensure that every customer receives the На Счастье experience 
+      they deserve.
+      
+      Remember: It's always better to take an extra minute to verify quality than 
+      to spend hours fixing problems later.
+    duration_minutes: 25
+    order: 3
+
+tests:
+  - id: "m2_test1"
+    title: "Production & Quality Quiz"
+    passing_score: 75
+    questions:
+      - id: "q1"
+        type: "single"
+        question: "What is our quality philosophy at На Счастье?"
+        options:
+          - "Do it fast and fix issues later"
+          - "Do it right the first time, every time"
+          - "Quality is the inspector's responsibility"
+          - "Good enough is acceptable"
+        correct_index: 1
+
+      - id: "q2"
+        type: "single"
+        question: "Why do we use Standard Operating Procedures (SOPs)?"
+        options:
+          - "To make work more complicated"
+          - "To ensure consistency and quality"
+          - "Because management requires it"
+          - "To slow down production"
+        correct_index: 1
+
+      - id: "q3"
+        type: "single"
+        question: "What are the three lines of defense in our QC process?"
+        options:
+          - "Manager, Supervisor, Worker"
+          - "Morning, Afternoon, Evening checks"
+          - "Self-Inspection, Peer Review, QC Inspector"
+          - "Visual, Measurement, Functional"
+        correct_index: 2
+
+      - id: "q4"
+        type: "single"
+        question: "What should you do when you find a quality issue?"
+        options:
+          - "Ignore it if it's minor"
+          - "Fix it quickly and don't tell anyone"
+          - "STOP, TAG, REPORT, DOCUMENT, LEARN"
+          - "Continue working and mention it later"
+        correct_index: 2
+
+      - id: "q5"
+        type: "single"
+        question: "Who is responsible for quality in our production process?"
+        options:
+          - "Only the QC inspectors"
+          - "Only the production manager"
+          - "Every team member"
+          - "Only senior staff"
+        correct_index: 2
+
+      - id: "q6"
+        type: "single"
+        question: "What is the first checkpoint in our quality control?"
+        options:
+          - "Customer inspection"
+          - "Manager approval"
+          - "Self-inspection"
+          - "Final QC review"
+        correct_index: 2
