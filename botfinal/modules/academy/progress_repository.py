@@ -290,9 +290,13 @@ class ProgressRepository:
         conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()
         
+        # Use INSERT ... ON CONFLICT to preserve other user data
         cursor.execute("""
-            INSERT OR REPLACE INTO users (user_id, role, updated_at)
+            INSERT INTO users (user_id, role, updated_at)
             VALUES (?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(user_id) DO UPDATE SET
+                role = excluded.role,
+                updated_at = CURRENT_TIMESTAMP
         """, (user_id, role))
         
         conn.commit()

@@ -478,6 +478,10 @@ async def request_tts(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer("🔊 Генерирую аудио... Пожалуйста, подождите.")
     
     parts = query.data.split(':')
+    if len(parts) < 3:
+        await query.answer("❌ Неверный формат данных")
+        return VIEWING_LESSON
+    
     module_id = parts[1]
     lesson_id = parts[2]
     voice_type = parts[3] if len(parts) > 3 else 'ru_female'
@@ -512,7 +516,7 @@ async def request_tts(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
-                    text="❌ Не удалось сгенерировать аудио. Попробуйте снова."
+                    text=f"❌ Не удалось сгенерировать аудио. Код ошибки: {response.status_code}"
                 )
     
     except Exception as e:

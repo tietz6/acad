@@ -4,7 +4,7 @@ FastAPI Router for Academy Module
 import os
 import logging
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, Header
 from fastapi.responses import JSONResponse
 import httpx
 
@@ -386,11 +386,18 @@ async def get_user_role(user_id: str):
 
 
 # Admin analytics endpoints
-def verify_admin_token(x_admin_token: str = None):
+def verify_admin_token(x_admin_token: Optional[str] = Header(None)):
     """Verify admin API key"""
     admin_key = os.getenv("ADMIN_API_KEY")
     if not admin_key:
-        # If no admin key is set, allow access (for development)
+        # If no admin key is set in production, this is a misconfiguration
+        # In development, we allow access for testing
+        import sys
+        if 'pytest' not in sys.modules and os.getenv("ENVIRONMENT") == "production":
+            raise HTTPException(
+                status_code=500,
+                detail="Server misconfiguration: ADMIN_API_KEY not set"
+            )
         return True
     
     if not x_admin_token or x_admin_token != admin_key:
@@ -402,7 +409,7 @@ def verify_admin_token(x_admin_token: str = None):
 
 
 @router.get("/admin/users")
-async def get_all_users(x_admin_token: Optional[str] = None):
+async def get_all_users(x_admin_token: Optional[str] = Header(None)):
     """
     Get list of all users with their progress
     
@@ -425,7 +432,7 @@ async def get_all_users(x_admin_token: Optional[str] = None):
 
 
 @router.get("/admin/users/{user_id}/progress")
-async def get_admin_user_progress(user_id: str, x_admin_token: Optional[str] = None):
+async def get_admin_user_progress(user_id: str, x_admin_token: Optional[str] = Header(None)):
     """
     Get detailed progress for a specific user (admin view)
     
@@ -461,7 +468,7 @@ async def get_admin_user_progress(user_id: str, x_admin_token: Optional[str] = N
 
 
 @router.get("/admin/stats/summary")
-async def get_admin_stats_summary(x_admin_token: Optional[str] = None):
+async def get_admin_stats_summary(x_admin_token: Optional[str] = Header(None)):
     """
     Get aggregated statistics across all users
     
