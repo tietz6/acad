@@ -1,7 +1,7 @@
 """
 Pydantic models for Academy module
 """
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -163,3 +163,94 @@ class LessonCompletionRequest(BaseModel):
 class TTSRequest(BaseModel):
     """Request for text-to-speech generation"""
     voice_type: str = "ru_female"  # ru_female or ru_male
+
+
+# ========================================
+# V3 Models: Levels, Learning Plans, Quests, Enhanced TTS
+# ========================================
+
+class UserLevel(BaseModel):
+    """Модель уровня и опыта пользователя"""
+    user_id: str
+    level: int = Field(default=1, ge=1, le=10)
+    xp: int = Field(default=0, ge=0)
+    xp_to_next: int
+    rank_name: str
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+
+class XPAward(BaseModel):
+    """Начисление опыта"""
+    user_id: str
+    xp_amount: int
+    reason: str
+    awarded_at: datetime = Field(default_factory=datetime.now)
+
+
+class LearningPlanItem(BaseModel):
+    """Элемент персонального плана обучения"""
+    user_id: str
+    module_id: str
+    lesson_id: str
+    status: Literal["pending", "active", "done"] = "pending"
+    priority: int = Field(default=1, ge=1, le=10)
+    generated_at: datetime = Field(default_factory=datetime.now)
+
+
+class LearningPlan(BaseModel):
+    """Персональный план обучения"""
+    user_id: str
+    items: List[LearningPlanItem]
+    generated_at: datetime
+    valid_until: datetime
+
+
+class DailyQuest(BaseModel):
+    """Ежедневное задание"""
+    quest_id: str
+    user_id: str
+    type: Literal["lesson", "test", "streak", "tts", "module"]
+    description: str
+    reward_xp: int
+    status: Literal["active", "completed", "expired"] = "active"
+    date: str  # YYYY-MM-DD
+    created_at: datetime = Field(default_factory=datetime.now)
+
+
+class QuestCompletion(BaseModel):
+    """Завершение квеста"""
+    user_id: str
+    quest_id: str
+
+
+class TTSSettings(BaseModel):
+    """Настройки TTS для пользователя"""
+    user_id: str
+    voice: Literal["female", "male", "neutral"] = "female"
+    speed: Literal["1.0", "1.25", "1.5"] = "1.0"
+    format: Literal["ogg", "mp3"] = "mp3"
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+
+class MegaStats(BaseModel):
+    """Мега-статистика для администраторов"""
+    # Общие данные
+    total_users: int
+    active_today: int
+    active_week: int
+    active_month: int
+    
+    # По ролям
+    users_by_role: Dict[str, int]
+    
+    # По модулям
+    top_modules: List[Dict[str, Any]]
+    hardest_modules: List[Dict[str, Any]]
+    unused_modules: List[Dict[str, Any]]
+    
+    # По тестам
+    average_score: float
+    failing_questions: List[Dict[str, Any]]
+    low_performance_modules: List[Dict[str, Any]]
+    
+    generated_at: datetime = Field(default_factory=datetime.now)
