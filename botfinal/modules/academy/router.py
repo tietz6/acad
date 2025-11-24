@@ -15,6 +15,7 @@ from .models import (
 from .repository import ModuleRepository
 from .progress_repository import ProgressRepository
 from .service import AcademyService
+from .tts_service import tts_service
 
 logger = logging.getLogger(__name__)
 
@@ -235,7 +236,7 @@ async def generate_lesson_tts(
     Args:
         module_id: Module identifier
         lesson_id: Lesson identifier
-        tts_request: TTS configuration (voice_type)
+        tts_request: TTS configuration (voice_type: ru_female or ru_male)
     
     Returns:
         Audio URL and metadata
@@ -248,34 +249,25 @@ async def generate_lesson_tts(
             detail=f"Lesson {lesson_id} not found in module {module_id}"
         )
     
-    # Call internal TTS endpoint
+    # Generate TTS using the TTS service
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{BACKEND_BASE_URL}/voice/v1/tts",
-                params={
-                    "text": lesson.content,
-                    "voice_type": tts_request.voice_type
-                }
-            )
-            
-            if response.status_code == 200:
-                tts_result = response.json()
-                return {
-                    "success": True,
-                    "lesson_id": lesson_id,
-                    "module_id": module_id,
-                    "audio_url": f"{BACKEND_BASE_URL}{tts_result['audio_url']}",
-                    "voice_type": tts_request.voice_type
-                }
-            else:
-                raise HTTPException(
-                    status_code=response.status_code,
-                    detail="TTS generation failed"
-                )
-    except httpx.RequestError as e:
-        logger.error(f"TTS request failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"TTS service unavailable: {str(e)}")
+        tts_result = await tts_service.generate_tts(
+            text=lesson.content,
+            voice_type=tts_request.voice_type
+        )
+        
+        return {
+            "success": True,
+            "lesson_id": lesson_id,
+            "module_id": module_id,
+            "audio_url": f"{BACKEND_BASE_URL}{tts_result['audio_url']}",
+            "voice_type": tts_request.voice_type,
+            "provider": tts_result.get("provider", "unknown")
+        }
+    
+    except Exception as e:
+        logger.error(f"TTS generation failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"TTS generation failed: {str(e)}")
 
 
 @router.get("/search")

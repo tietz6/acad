@@ -11,8 +11,13 @@ from typing import List
 import importlib.util
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 from gtts import gTTS
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -31,6 +36,13 @@ app = FastAPI(
 # Global storage for loaded modules
 loaded_module_commands = []
 loaded_module_routers = []
+
+# Create TTS data directory if it doesn't exist
+tts_data_dir = Path(__file__).parent / "data" / "tts"
+tts_data_dir.mkdir(parents=True, exist_ok=True)
+
+# Mount static files for TTS audio
+app.mount("/data/tts", StaticFiles(directory=str(tts_data_dir)), name="tts_audio")
 
 
 def initialize_database():
