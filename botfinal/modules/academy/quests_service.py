@@ -3,6 +3,7 @@ Quests Service - Ежедневные задания (V3)
 """
 import sqlite3
 import logging
+import random
 from pathlib import Path
 from typing import Optional, List
 from datetime import datetime, date
@@ -143,7 +144,6 @@ class QuestsService:
         today = date.today().isoformat()
         
         # Выбрать 3 случайных типа квестов
-        import random
         quest_types = random.sample(list(QUEST_TYPES.keys()), min(3, len(QUEST_TYPES)))
         
         conn = sqlite3.connect(str(self.db_path))

@@ -253,8 +253,8 @@ async def submit_test(
         # Base XP for completing test
         xp_amount = 30
         
-        # Bonus XP for perfect score
-        if result.passed and result.score == result.total_questions:
+        # Bonus XP for perfect score (all questions correct)
+        if result.passed and result.total_questions > 0 and result.score == result.total_questions:
             xp_amount = 60
         
         xp_result = levels_service.award_xp(

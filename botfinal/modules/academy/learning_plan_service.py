@@ -10,6 +10,9 @@ from .models import LearningPlanItem, LearningPlan
 
 logger = logging.getLogger(__name__)
 
+# Константы
+WEAK_MODULE_THRESHOLD = 70  # Порог среднего балла для определения слабых модулей
+
 
 class LearningPlanService:
     """Сервис для управления персональными планами обучения"""
@@ -220,10 +223,10 @@ class LearningPlanService:
                 module_scores[module_id] = []
             module_scores[module_id].append(score)
         
-        # Найти модули со средним баллом < 70%
+        # Найти модули со средним баллом ниже порога
         for module_id, scores in module_scores.items():
             avg_score = sum(scores) / len(scores)
-            if avg_score < 70:
+            if avg_score < WEAK_MODULE_THRESHOLD:
                 weak_modules.add(module_id)
         
         return weak_modules

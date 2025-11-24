@@ -150,19 +150,24 @@ class TTSSettingsService:
     
     def apply_settings_to_audio(self, audio_path: Path, settings: TTSSettings) -> Path:
         """
-        Применить настройки скорости и формата к аудио (будущее улучшение)
+        PLACEHOLDER: Применить настройки скорости и формата к аудио
         
-        В текущей версии это заглушка. В будущем можно использовать
-        библиотеки вроде pydub для изменения скорости и конвертации формата.
+        ⚠️ ВНИМАНИЕ: Эта функция является заглушкой и не применяет настройки в текущей версии.
+        
+        Для полной реализации потребуется:
+        - Библиотека pydub для изменения скорости воспроизведения
+        - Библиотека для конвертации между форматами (mp3 <-> ogg)
+        
+        В будущих версиях эта функция будет реализована.
         
         Args:
             audio_path: Путь к исходному аудиофайлу
             settings: Настройки TTS
         
         Returns:
-            Путь к обработанному файлу
+            Путь к исходному файлу (без изменений)
         """
         # TODO: Реализовать изменение скорости и конвертацию формата
-        # Пока что просто возвращаем исходный файл
-        logger.info(f"TTS settings (speed={settings.speed}, format={settings.format}) noted but not applied yet")
+        # Требуется: pip install pydub
+        logger.info(f"TTS settings placeholder: speed={settings.speed}, format={settings.format} (not applied)")
         return audio_path
