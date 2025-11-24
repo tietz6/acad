@@ -126,7 +126,7 @@ async def complete_lesson(user_id: str, module_id: str, lesson_id: str):
         lesson_id: Lesson identifier
     
     Returns:
-        Success message
+        Success message with XP award (V3)
     """
     success = service.complete_lesson(user_id, module_id, lesson_id)
     if not success:
@@ -135,12 +135,38 @@ async def complete_lesson(user_id: str, module_id: str, lesson_id: str):
             detail=f"Lesson {lesson_id} not found in module {module_id}"
         )
     
+    # V3: Award XP for completing lesson
+    try:
+        xp_result = levels_service.award_xp(
+            user_id=user_id,
+            xp_amount=10,
+            reason=f"Completed lesson {lesson_id} in {module_id}"
+        )
+        
+        # V3: Check and complete quest
+        quest_result = quests_service.check_and_complete_quest(user_id, "lesson")
+        if quest_result.get("quest_completed"):
+            # Award additional XP for quest
+            quest_xp = levels_service.award_xp(
+                user_id=user_id,
+                xp_amount=quest_result["reward_xp"],
+                reason=f"Completed daily quest: lesson"
+            )
+            xp_result["quest_xp"] = quest_xp
+        
+        # V3: Update learning plan status
+        learning_plan_service.update_item_status(user_id, module_id, lesson_id, "done")
+    except Exception as e:
+        logger.warning(f"Error awarding XP or updating plan: {e}")
+        xp_result = None
+    
     return {
         "success": True,
         "message": "Lesson marked as completed",
         "user_id": user_id,
         "module_id": module_id,
-        "lesson_id": lesson_id
+        "lesson_id": lesson_id,
+        "xp_awarded": xp_result
     }
 
 
@@ -207,7 +233,7 @@ async def submit_test(
         submission: Test submission with user_id and answers
     
     Returns:
-        Test result with score and pass/fail status
+        Test result with score and pass/fail status (V3: includes XP awards)
     """
     result = service.evaluate_test(
         module_id=module_id,
@@ -222,13 +248,46 @@ async def submit_test(
             detail=f"Test {test_id} not found in module {module_id}"
         )
     
-    return result
+    # V3: Award XP for test completion
+    try:
+        # Base XP for completing test
+        xp_amount = 30
+        
+        # Bonus XP for perfect score
+        if result.passed and result.score == result.total_questions:
+            xp_amount = 60
+        
+        xp_result = levels_service.award_xp(
+            user_id=submission.user_id,
+            xp_amount=xp_amount,
+            reason=f"Completed test {test_id} in {module_id}"
+        )
+        
+        # V3: Check and complete quest
+        quest_result = quests_service.check_and_complete_quest(submission.user_id, "test")
+        if quest_result.get("quest_completed"):
+            # Award additional XP for quest
+            quest_xp = levels_service.award_xp(
+                user_id=submission.user_id,
+                xp_amount=quest_result["reward_xp"],
+                reason=f"Completed daily quest: test"
+            )
+        
+        # Add XP info to result (using dict conversion)
+        result_dict = result.model_dump()
+        result_dict["xp_awarded"] = xp_result
+        
+        return result_dict
+    except Exception as e:
+        logger.warning(f"Error awarding XP for test: {e}")
+        return result
 
 
 @router.post("/lessons/{module_id}/{lesson_id}/tts")
 async def generate_lesson_tts(
     module_id: str,
     lesson_id: str,
+    user_id: Optional[str] = None,
     tts_request: TTSRequest = Body(default=TTSRequest())
 ):
     """
@@ -237,10 +296,11 @@ async def generate_lesson_tts(
     Args:
         module_id: Module identifier
         lesson_id: Lesson identifier
+        user_id: Optional user ID (V3: for quest completion)
         tts_request: TTS configuration (voice_type: ru_female or ru_male)
     
     Returns:
-        Audio URL and metadata
+        Audio URL and metadata (V3: includes quest completion if user_id provided)
     """
     # Get lesson content
     lesson = service.get_lesson(module_id, lesson_id)
@@ -261,7 +321,7 @@ async def generate_lesson_tts(
             cache_key=cache_key
         )
         
-        return {
+        response = {
             "success": True,
             "lesson_id": lesson_id,
             "module_id": module_id,
@@ -270,6 +330,24 @@ async def generate_lesson_tts(
             "provider": tts_result.get("provider", "unknown"),
             "cached": tts_result.get("cached", False)
         }
+        
+        # V3: Check and complete TTS quest if user_id provided
+        if user_id:
+            try:
+                quest_result = quests_service.check_and_complete_quest(user_id, "tts")
+                if quest_result.get("quest_completed"):
+                    # Award XP for quest
+                    xp_result = levels_service.award_xp(
+                        user_id=user_id,
+                        xp_amount=quest_result["reward_xp"],
+                        reason=f"Completed daily quest: tts"
+                    )
+                    response["quest_completed"] = True
+                    response["xp_awarded"] = xp_result
+            except Exception as e:
+                logger.warning(f"Error checking TTS quest: {e}")
+        
+        return response
     
     except Exception as e:
         logger.error(f"TTS generation failed: {e}", exc_info=True)
@@ -815,6 +893,219 @@ async def get_module_stats(x_admin_token: Optional[str] = Header(None)):
         }
     except Exception as e:
         logger.error(f"Error getting module stats: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========================================
+# V3 ENDPOINTS: Levels, Learning Plans, Quests, Mega Stats, Enhanced TTS
+# ========================================
+
+from .models import (
+    UserLevel, LearningPlan, DailyQuest, QuestCompletion,
+    TTSSettings, MegaStats
+)
+from .levels_service import LevelsService
+from .learning_plan_service import LearningPlanService
+from .quests_service import QuestsService
+from .mega_stats_service import MegaStatsService
+from .tts_settings_service import TTSSettingsService
+
+# Initialize V3 services
+levels_service = LevelsService()
+learning_plan_service = LearningPlanService()
+quests_service = QuestsService()
+mega_stats_service = MegaStatsService()
+tts_settings_service = TTSSettingsService()
+
+
+@router.get("/user/{user_id}/level", response_model=UserLevel)
+async def get_user_level(user_id: str):
+    """
+    Получить уровень и опыт пользователя
+    
+    Args:
+        user_id: ID пользователя
+    
+    Returns:
+        UserLevel с информацией об уровне, XP и ранге
+    """
+    try:
+        level = levels_service.get_user_level(user_id)
+        return level
+    except Exception as e:
+        logger.error(f"Error getting user level: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/plan/{user_id}", response_model=LearningPlan)
+async def get_learning_plan(user_id: str):
+    """
+    Получить персональный план обучения пользователя
+    
+    Args:
+        user_id: ID пользователя
+    
+    Returns:
+        LearningPlan с элементами плана
+    """
+    try:
+        plan = learning_plan_service.get_user_plan(user_id)
+        return plan
+    except Exception as e:
+        logger.error(f"Error getting learning plan: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/plan/{user_id}/generate", response_model=LearningPlan)
+async def generate_learning_plan(user_id: str):
+    """
+    Сгенерировать новый персональный план обучения
+    
+    Args:
+        user_id: ID пользователя
+    
+    Returns:
+        Новый LearningPlan
+    """
+    try:
+        # Получить роль пользователя
+        user_role = progress_repo.get_user_role(user_id) or "other"
+        
+        # Сгенерировать план
+        plan = learning_plan_service.generate_plan(
+            user_id=user_id,
+            user_role=user_role,
+            module_repo=module_repo,
+            progress_repo=progress_repo
+        )
+        
+        return plan
+    except Exception as e:
+        logger.error(f"Error generating learning plan: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/quests/{user_id}", response_model=List[DailyQuest])
+async def get_daily_quests(user_id: str):
+    """
+    Получить ежедневные квесты пользователя
+    
+    Args:
+        user_id: ID пользователя
+    
+    Returns:
+        Список активных квестов на сегодня
+    """
+    try:
+        quests = quests_service.get_daily_quests(user_id)
+        return quests
+    except Exception as e:
+        logger.error(f"Error getting daily quests: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/quests/{user_id}/complete/{quest_id}")
+async def complete_quest(user_id: str, quest_id: str):
+    """
+    Отметить квест как выполненный
+    
+    Args:
+        user_id: ID пользователя
+        quest_id: ID квеста
+    
+    Returns:
+        Результат выполнения с начисленным XP
+    """
+    try:
+        # Завершить квест
+        result = quests_service.complete_quest(user_id, quest_id)
+        
+        if result["success"]:
+            # Начислить XP
+            xp_result = levels_service.award_xp(
+                user_id=user_id,
+                xp_amount=result["reward_xp"],
+                reason=f"Completed quest: {quest_id}"
+            )
+            
+            result["xp_awarded"] = xp_result
+        
+        return result
+    except Exception as e:
+        logger.error(f"Error completing quest: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/admin/mega_stats", response_model=MegaStats)
+async def get_mega_stats(x_admin_token: Optional[str] = Header(None)):
+    """
+    Получить мегастатистику для администраторов
+    Требуется X-Admin-Token
+    
+    Returns:
+        MegaStats с полной статистикой по системе
+    """
+    # Проверить админский токен
+    admin_token = os.getenv("ADMIN_API_KEY")
+    if admin_token and x_admin_token != admin_token:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        stats = mega_stats_service.get_mega_stats(module_repo)
+        return stats
+    except Exception as e:
+        logger.error(f"Error getting mega stats: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/tts/settings/{user_id}", response_model=TTSSettings)
+async def get_tts_settings(user_id: str):
+    """
+    Получить настройки TTS пользователя
+    
+    Args:
+        user_id: ID пользователя
+    
+    Returns:
+        TTSSettings с настройками голоса, скорости и формата
+    """
+    try:
+        settings = tts_settings_service.get_user_settings(user_id)
+        return settings
+    except Exception as e:
+        logger.error(f"Error getting TTS settings: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/tts/settings/{user_id}", response_model=TTSSettings)
+async def update_tts_settings(
+    user_id: str,
+    voice: Optional[str] = Body(None),
+    speed: Optional[str] = Body(None),
+    format: Optional[str] = Body(None)
+):
+    """
+    Обновить настройки TTS пользователя
+    
+    Args:
+        user_id: ID пользователя
+        voice: Голос (female, male, neutral)
+        speed: Скорость (1.0, 1.25, 1.5)
+        format: Формат (ogg, mp3)
+    
+    Returns:
+        Обновленные TTSSettings
+    """
+    try:
+        settings = tts_settings_service.update_settings(
+            user_id=user_id,
+            voice=voice,
+            speed=speed,
+            format=format
+        )
+        return settings
+    except Exception as e:
+        logger.error(f"Error updating TTS settings: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
