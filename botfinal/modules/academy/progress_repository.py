@@ -29,6 +29,16 @@ class ProgressRepository:
         conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()
         
+        # Create users table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                user_id TEXT PRIMARY KEY,
+                role TEXT DEFAULT 'other',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
         # Create progress table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS user_progress (
@@ -248,3 +258,79 @@ class ProgressRepository:
             'total_lessons': row[0] if row else 0,
             'completed_lessons': row[1] if row else 0
         }
+    
+    def get_user_role(self, user_id: str) -> Optional[str]:
+        """
+        Get user's role
+        
+        Args:
+            user_id: User identifier
+        
+        Returns:
+            User role or None if not set
+        """
+        conn = sqlite3.connect(str(self.db_path))
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT role FROM users WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+        conn.close()
+        
+        return row['role'] if row else None
+    
+    def set_user_role(self, user_id: str, role: str):
+        """
+        Set user's role
+        
+        Args:
+            user_id: User identifier
+            role: User role (sales_manager, generator, admin, other)
+        """
+        conn = sqlite3.connect(str(self.db_path))
+        cursor = conn.cursor()
+        
+        # Use INSERT ... ON CONFLICT to preserve other user data
+        cursor.execute("""
+            INSERT INTO users (user_id, role, updated_at)
+            VALUES (?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(user_id) DO UPDATE SET
+                role = excluded.role,
+                updated_at = CURRENT_TIMESTAMP
+        """, (user_id, role))
+        
+        conn.commit()
+        conn.close()
+        logger.info(f"Set role for user {user_id}: {role}")
+    
+    def get_all_users(self) -> List[Dict]:
+        """
+        Get all users with their roles and stats
+        
+        Returns:
+            List of user dictionaries
+        """
+        conn = sqlite3.connect(str(self.db_path))
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT 
+                u.user_id,
+                u.role,
+                u.created_at,
+                u.updated_at,
+                COUNT(DISTINCT CASE WHEN up.status = 'completed' THEN up.module_id END) as completed_modules,
+                COUNT(DISTINCT CASE WHEN up.status = 'completed' THEN up.lesson_id END) as completed_lessons,
+                COUNT(DISTINCT CASE WHEN tr.passed = 1 THEN tr.test_id END) as passed_tests,
+                MAX(COALESCE(up.updated_at, tr.submitted_at)) as last_activity
+            FROM users u
+            LEFT JOIN user_progress up ON u.user_id = up.user_id
+            LEFT JOIN test_results tr ON u.user_id = tr.user_id
+            GROUP BY u.user_id, u.role, u.created_at, u.updated_at
+        """)
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        return [dict(row) for row in rows]

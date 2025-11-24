@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8080")
 
 # Conversation states
-SELECTING_MODULE, VIEWING_LESSON, TAKING_TEST = range(3)
+SELECTING_ROLE, SELECTING_MODULE, VIEWING_LESSON, TAKING_TEST, SELECTING_VOICE = range(5)
 
 # Maximum message length for Telegram
 MAX_MESSAGE_LENGTH = 4000
@@ -55,89 +55,164 @@ def split_long_message(text: str, max_length: int = MAX_MESSAGE_LENGTH) -> List[
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Start command handler"""
+    """Start command handler - with role selection"""
     user = update.effective_user
-    welcome_message = f"""
-👋 Welcome to SALESBOT Training Academy, {user.first_name}!
+    user_id = str(user.id)
+    
+    # Check if user already has a role
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{BACKEND_URL}/academy/v1/users/{user_id}/role")
+            
+            if response.status_code == 200:
+                role_data = response.json()
+                user_role = role_data.get('role')
+                
+                if user_role and user_role != 'not_set':
+                    # User already has a role, show welcome message
+                    welcome_message = f"""
+👋 Добро пожаловать в Академию обучения На Счастье, {user.first_name}!
 
-I'm your training assistant for На Счастье. Here's what I can help you with:
+Я ваш обучающий ассистент. Вот что я могу для вас сделать:
 
-📚 /academy - Browse and study training modules
-📊 /progress - Check your learning progress
-🔍 /search <query> - Search for specific content
-❓ /help - Show available commands
+📚 /academy - Просмотр и изучение обучающих модулей
+📊 /progress - Проверка вашего прогресса обучения
+🔍 /search <запрос> - Поиск конкретного контента
+❓ /help - Показать доступные команды
 
-Let's start your learning journey! Type /academy to see available modules.
+Давайте начнём ваше обучение! Наберите /academy чтобы увидеть доступные модули.
 """
-    await update.message.reply_text(welcome_message)
+                    await update.message.reply_text(welcome_message)
+                    return
+    except Exception as e:
+        logger.error(f"Error checking user role: {e}")
+    
+    # User doesn't have a role, ask for it
+    welcome_message = f"""
+👋 Добро пожаловать в Академию обучения На Счастье, {user.first_name}!
+
+Для начала, пожалуйста, выберите вашу роль в компании:
+"""
+    
+    keyboard = [
+        [InlineKeyboardButton("👔 Менеджер по продажам", callback_data="role:sales_manager")],
+        [InlineKeyboardButton("🎨 Генератор / Продакшн", callback_data="role:generator")],
+        [InlineKeyboardButton("⭐ Руководитель / Админ", callback_data="role:admin")],
+        [InlineKeyboardButton("👤 Другое", callback_data="role:other")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+
+
+async def role_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle role selection"""
+    query = update.callback_query
+    await query.answer()
+    
+    role = query.data.split(':')[1]
+    user_id = str(update.effective_user.id)
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{BACKEND_URL}/academy/v1/users/{user_id}/role",
+                json={"role": role}
+            )
+            
+            if response.status_code == 200:
+                role_names = {
+                    'sales_manager': 'Менеджер по продажам',
+                    'generator': 'Генератор / Продакшн',
+                    'admin': 'Руководитель / Админ',
+                    'other': 'Другое'
+                }
+                
+                message = f"""
+✅ Роль сохранена: *{role_names.get(role, role)}*
+
+Теперь вам будут показываться нужные обучающие модули.
+
+Наберите /academy, чтобы начать обучение!
+"""
+                await query.edit_message_text(message, parse_mode='Markdown')
+            else:
+                await query.edit_message_text("❌ Ошибка при сохранении роли. Попробуйте снова.")
+    
+    except Exception as e:
+        logger.error(f"Error setting role: {e}", exc_info=True)
+        await query.edit_message_text("❌ Произошла ошибка. Попробуйте позже.")
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Help command handler"""
     help_text = """
-🤖 *SALESBOT Training Academy Bot*
+🤖 *Академия обучения На Счастье*
 
-Available commands:
+Доступные команды:
 
-📚 /academy - Browse training modules
-   • View all available modules
-   • Filter by role if needed
-   • Start learning lessons
+📚 /academy - Просмотр обучающих модулей
+   • Просмотр всех доступных модулей
+   • Фильтрация по вашей роли
+   • Начало изучения уроков
 
-📊 /progress - View your progress
-   • See completed modules
-   • Track lesson completion
-   • Review test results
+📊 /progress - Просмотр вашего прогресса
+   • Просмотр завершённых модулей
+   • Отслеживание прохождения уроков
+   • Просмотр результатов тестов
 
-🔍 /search <query> - Search content
-   • Find specific modules
-   • Search lesson content
-   • Quick access to topics
+🔍 /search <запрос> - Поиск контента
+   • Поиск конкретных модулей
+   • Поиск контента уроков
+   • Быстрый доступ к темам
 
-❓ /help - Show this help message
+❓ /help - Показать это справочное сообщение
 
-💡 *Tips:*
-• Take your time with each lesson
-• Complete lessons in order
-• Tests help reinforce learning
-• You can revisit any lesson anytime
+💡 *Советы:*
+• Не торопитесь с каждым уроком
+• Проходите уроки по порядку
+• Тесты помогают закрепить знания
+• Вы можете в любое время вернуться к любому уроку
 
-Ready to learn? Start with /academy!
+Готовы учиться? Начните с /academy!
 """
     await update.message.reply_text(help_text, parse_mode='Markdown')
 
 
 async def academy_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show academy modules menu"""
+    user_id = str(update.effective_user.id)
+    
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(f"{BACKEND_URL}/academy/v1/modules")
+            # Get modules filtered by user's role
+            response = await client.get(f"{BACKEND_URL}/academy/v1/modules?user_id={user_id}")
             
             if response.status_code != 200:
-                await update.message.reply_text("❌ Failed to load modules. Please try again later.")
+                await update.message.reply_text("❌ Не удалось загрузить модули. Попробуйте позже.")
                 return ConversationHandler.END
             
             modules = response.json()
             
             if not modules:
-                await update.message.reply_text("📚 No training modules available yet. Check back soon!")
+                await update.message.reply_text("📚 Обучающие модули пока недоступны. Заходите позже!")
                 return ConversationHandler.END
             
             # Create keyboard with module buttons
             keyboard = []
             for module in modules:
-                button_text = f"{module['title']} (Level {module['level']})"
+                button_text = f"{module['title']} (Уровень {module['level']})"
                 keyboard.append([InlineKeyboardButton(
                     button_text,
                     callback_data=f"module:{module['id']}"
                 )])
             
-            keyboard.append([InlineKeyboardButton("❌ Close", callback_data="close")])
+            keyboard.append([InlineKeyboardButton("❌ Закрыть", callback_data="close")])
             
             reply_markup = InlineKeyboardMarkup(keyboard)
             
-            message = "📚 *Available Training Modules*\n\n"
-            message += "Select a module to start learning:\n"
+            message = "📚 *Доступные обучающие модули*\n\n"
+            message += "Выберите модуль для начала обучения:\n"
             
             await update.message.reply_text(
                 message,
@@ -149,7 +224,7 @@ async def academy_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     except Exception as e:
         logger.error(f"Error in academy_command: {e}", exc_info=True)
-        await update.message.reply_text("❌ An error occurred. Please try again later.")
+        await update.message.reply_text("❌ Произошла ошибка. Попробуйте позже.")
         return ConversationHandler.END
 
 
@@ -175,12 +250,12 @@ async def module_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Build module info message
             message = f"📘 *{module['title']}*\n\n"
             message += f"{module['description']}\n\n"
-            message += f"📊 Level: {module['level']}\n"
-            message += f"📚 Lessons: {len(module['lessons'])}\n"
-            message += f"📝 Tests: {len(module['tests'])}\n"
+            message += f"📊 Уровень: {module['level']}\n"
+            message += f"📚 Уроков: {len(module['lessons'])}\n"
+            message += f"📝 Тестов: {len(module['tests'])}\n"
             
             if module.get('estimated_duration_minutes'):
-                message += f"⏱ Duration: ~{module['estimated_duration_minutes']} minutes\n"
+                message += f"⏱ Длительность: ~{module['estimated_duration_minutes']} минут\n"
             
             # Create keyboard
             keyboard = []
@@ -199,8 +274,8 @@ async def module_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     callback_data=f"test:{module_id}:{test['id']}"
                 )])
             
-            keyboard.append([InlineKeyboardButton("◀️ Back to Modules", callback_data="back_to_modules")])
-            keyboard.append([InlineKeyboardButton("❌ Close", callback_data="close")])
+            keyboard.append([InlineKeyboardButton("◀️ Назад к модулям", callback_data="back_to_modules")])
+            keyboard.append([InlineKeyboardButton("❌ Закрыть", callback_data="close")])
             
             reply_markup = InlineKeyboardMarkup(keyboard)
             
@@ -271,10 +346,10 @@ async def lesson_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 keyboard.append([InlineKeyboardButton("▶️ Next Part", callback_data="lesson_next")])
             
             keyboard.append([
-                InlineKeyboardButton("✅ Mark Completed", callback_data=f"complete:{module_id}:{lesson_id}"),
-                InlineKeyboardButton("🔊 Listen (TTS)", callback_data=f"tts:{module_id}:{lesson_id}")
+                InlineKeyboardButton("✅ Отметить как пройденный", callback_data=f"complete:{module_id}:{lesson_id}"),
+                InlineKeyboardButton("🔊 Послушать урок", callback_data=f"tts_menu:{module_id}:{lesson_id}")
             ])
-            keyboard.append([InlineKeyboardButton("◀️ Back to Module", callback_data=f"module:{module_id}")])
+            keyboard.append([InlineKeyboardButton("◀️ Назад к модулю", callback_data=f"module:{module_id}")])
             
             reply_markup = InlineKeyboardMarkup(keyboard)
             
@@ -310,16 +385,16 @@ async def lesson_navigation(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['current_chunk'] = current_chunk
     
     # Build message
-    message = f"📖 Lesson (Part {current_chunk + 1}/{len(chunks)})\n\n{chunks[current_chunk]}"
+    message = f"📖 Урок (Часть {current_chunk + 1}/{len(chunks)})\n\n{chunks[current_chunk]}"
     
     # Create navigation keyboard
     keyboard = []
     nav_row = []
     
     if current_chunk > 0:
-        nav_row.append(InlineKeyboardButton("◀️ Previous", callback_data="lesson_prev"))
+        nav_row.append(InlineKeyboardButton("◀️ Предыдущая", callback_data="lesson_prev"))
     if current_chunk < len(chunks) - 1:
-        nav_row.append(InlineKeyboardButton("Next ▶️", callback_data="lesson_next"))
+        nav_row.append(InlineKeyboardButton("Следующая ▶️", callback_data="lesson_next"))
     
     if nav_row:
         keyboard.append(nav_row)
@@ -328,10 +403,10 @@ async def lesson_navigation(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lesson_id = lesson_data.get('lesson_id')
     
     keyboard.append([
-        InlineKeyboardButton("✅ Mark Completed", callback_data=f"complete:{module_id}:{lesson_id}"),
-        InlineKeyboardButton("🔊 Listen (TTS)", callback_data=f"tts:{module_id}:{lesson_id}")
+        InlineKeyboardButton("✅ Отметить как пройденный", callback_data=f"complete:{module_id}:{lesson_id}"),
+        InlineKeyboardButton("🔊 Послушать урок", callback_data=f"tts_menu:{module_id}:{lesson_id}")
     ])
-    keyboard.append([InlineKeyboardButton("◀️ Back to Module", callback_data=f"module:{module_id}")])
+    keyboard.append([InlineKeyboardButton("◀️ Назад к модулю", callback_data=f"module:{module_id}")])
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -339,10 +414,38 @@ async def lesson_navigation(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return VIEWING_LESSON
 
 
+async def show_tts_voice_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show voice selection menu for TTS"""
+    query = update.callback_query
+    await query.answer()
+    
+    parts = query.data.split(':')
+    module_id = parts[1]
+    lesson_id = parts[2]
+    
+    # Store context for TTS request
+    context.user_data['tts_context'] = {
+        'module_id': module_id,
+        'lesson_id': lesson_id
+    }
+    
+    message = "🔊 *Выберите голос для озвучки урока:*"
+    
+    keyboard = [
+        [InlineKeyboardButton("👩 Женский голос", callback_data=f"tts:{module_id}:{lesson_id}:ru_female")],
+        [InlineKeyboardButton("👨 Мужской голос", callback_data=f"tts:{module_id}:{lesson_id}:ru_male")],
+        [InlineKeyboardButton("◀️ Отмена", callback_data=f"lesson:{module_id}:{lesson_id}")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+    return VIEWING_LESSON
+
+
 async def complete_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Mark lesson as completed"""
     query = update.callback_query
-    await query.answer("✅ Lesson marked as completed!")
+    await query.answer("✅ Урок отмечен как пройденный!")
     
     parts = query.data.split(':')
     module_id = parts[1]
@@ -372,17 +475,22 @@ async def complete_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def request_tts(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Request TTS for lesson"""
     query = update.callback_query
-    await query.answer("🔊 Generating audio... Please wait.")
+    await query.answer("🔊 Генерирую аудио... Пожалуйста, подождите.")
     
     parts = query.data.split(':')
+    if len(parts) < 3:
+        await query.answer("❌ Неверный формат данных")
+        return VIEWING_LESSON
+    
     module_id = parts[1]
     lesson_id = parts[2]
+    voice_type = parts[3] if len(parts) > 3 else 'ru_female'
     
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
                 f"{BACKEND_URL}/academy/v1/lessons/{module_id}/{lesson_id}/tts",
-                json={"voice_type": "russian"}
+                json={"voice_type": voice_type}
             )
             
             if response.status_code == 200:
@@ -390,6 +498,7 @@ async def request_tts(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 audio_url = result.get('audio_url')
                 
                 if audio_url:
+                    voice_name = "Женский голос" if voice_type == "ru_female" else "Мужской голос"
                     # Download and send audio
                     audio_response = await client.get(audio_url)
                     if audio_response.status_code == 200:
@@ -397,24 +506,24 @@ async def request_tts(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         await context.bot.send_voice(
                             chat_id=update.effective_chat.id,
                             voice=audio_response.content,
-                            caption="🔊 Lesson audio"
+                            caption=f"🔊 Аудио урока ({voice_name})"
                         )
                     else:
                         await context.bot.send_message(
                             chat_id=update.effective_chat.id,
-                            text="✅ Audio generated! You can access it at: " + audio_url
+                            text="✅ Аудио сгенерировано! Вы можете прослушать его здесь: " + audio_url
                         )
             else:
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
-                    text="❌ Failed to generate audio. Please try again."
+                    text=f"❌ Не удалось сгенерировать аудио. Код ошибки: {response.status_code}"
                 )
     
     except Exception as e:
         logger.error(f"Error requesting TTS: {e}", exc_info=True)
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text="❌ TTS service is currently unavailable."
+            text="❌ Сервис озвучки временно недоступен."
         )
     
     return VIEWING_LESSON
@@ -446,7 +555,7 @@ async def test_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     break
             
             if not test:
-                await query.edit_message_text("❌ Test not found.")
+                await query.edit_message_text("❌ Тест не найден.")
                 return VIEWING_LESSON
             
             # Store test context
@@ -464,7 +573,7 @@ async def test_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     except Exception as e:
         logger.error(f"Error in test_selected: {e}", exc_info=True)
-        await query.edit_message_text("❌ An error occurred loading the test.")
+        await query.edit_message_text("❌ Произошла ошибка при загрузке теста.")
         return VIEWING_LESSON
 
 
@@ -481,7 +590,7 @@ async def show_test_question(query, context: ContextTypes.DEFAULT_TYPE):
     
     question = questions[current_q]
     
-    message = f"📝 *Question {current_q + 1} of {len(questions)}*\n\n"
+    message = f"📝 *Вопрос {current_q + 1} из {len(questions)}*\n\n"
     message += f"{question['question']}\n\n"
     
     # Create option buttons
@@ -492,7 +601,7 @@ async def show_test_question(query, context: ContextTypes.DEFAULT_TYPE):
             callback_data=f"answer:{idx}"
         )])
     
-    keyboard.append([InlineKeyboardButton("❌ Cancel Test", callback_data=f"module:{test_data['module_id']}")])
+    keyboard.append([InlineKeyboardButton("❌ Отменить тест", callback_data=f"module:{test_data['module_id']}")])
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -538,16 +647,16 @@ async def submit_test_answers(query, context: ContextTypes.DEFAULT_TYPE):
             if response.status_code == 200:
                 result = response.json()
                 
-                message = "🎉 *Test Complete!*\n\n"
-                message += f"Score: {result['score']}%\n"
-                message += f"Correct: {sum(1 for i, a in enumerate(result['user_answers']) if a == result['correct_answers'][i])}/{result['total_questions']}\n\n"
+                message = "🎉 *Тест завершён!*\n\n"
+                message += f"Балл: {result['score']}%\n"
+                message += f"Правильно: {sum(1 for i, a in enumerate(result['user_answers']) if a == result['correct_answers'][i])}/{result['total_questions']}\n\n"
                 
                 if result['passed']:
-                    message += "✅ *PASSED!* Congratulations!\n\n"
+                    message += "✅ *ПРОЙДЕН!* Поздравляем!\n\n"
                 else:
-                    message += "❌ *Not passed.* Keep learning and try again!\n\n"
+                    message += "❌ *Не пройден.* Продолжайте учиться и попробуйте снова!\n\n"
                 
-                keyboard = [[InlineKeyboardButton("◀️ Back to Module", callback_data=f"module:{test_data['module_id']}")]]
+                keyboard = [[InlineKeyboardButton("◀️ Назад к модулю", callback_data=f"module:{test_data['module_id']}")]]
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 
                 await query.edit_message_text(
@@ -556,11 +665,11 @@ async def submit_test_answers(query, context: ContextTypes.DEFAULT_TYPE):
                     parse_mode='Markdown'
                 )
             else:
-                await query.edit_message_text("❌ Failed to submit test.")
+                await query.edit_message_text("❌ Не удалось отправить тест.")
     
     except Exception as e:
         logger.error(f"Error submitting test: {e}", exc_info=True)
-        await query.edit_message_text("❌ An error occurred submitting the test.")
+        await query.edit_message_text("❌ Произошла ошибка при отправке теста.")
 
 
 async def progress_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -572,36 +681,36 @@ async def progress_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             response = await client.get(f"{BACKEND_URL}/academy/v1/progress/{user_id}")
             
             if response.status_code != 200:
-                await update.message.reply_text("❌ Failed to load progress.")
+                await update.message.reply_text("❌ Не удалось загрузить прогресс.")
                 return
             
             progress = response.json()
             
-            message = "📊 *Your Learning Progress*\n\n"
-            message += f"📚 Modules: {progress['completed_modules']}/{progress['total_modules']} completed\n"
-            message += f"📖 Lessons: {progress['completed_lessons']}/{progress['total_lessons']} completed\n"
-            message += f"📝 Tests: {progress['passed_tests']}/{progress['total_tests']} passed\n\n"
+            message = "📊 *Ваш прогресс обучения*\n\n"
+            message += f"📚 Модулей: {progress['completed_modules']}/{progress['total_modules']} завершено\n"
+            message += f"📖 Уроков: {progress['completed_lessons']}/{progress['total_lessons']} завершено\n"
+            message += f"📝 Тестов: {progress['passed_tests']}/{progress['total_tests']} пройдено\n\n"
             
             if progress['completed_lessons'] == 0:
-                message += "💡 Start learning with /academy!"
+                message += "💡 Начните обучение с /academy!"
             elif progress['completed_modules'] == progress['total_modules']:
-                message += "🎉 Amazing! You've completed all modules!"
+                message += "🎉 Потрясающе! Вы завершили все модули!"
             else:
                 completion_rate = int((progress['completed_lessons'] / max(progress['total_lessons'], 1)) * 100)
-                message += f"📈 Overall completion: {completion_rate}%\n"
-                message += "Keep up the great work! 🚀"
+                message += f"📈 Общий прогресс: {completion_rate}%\n"
+                message += "Продолжайте в том же духе! 🚀"
             
             await update.message.reply_text(message, parse_mode='Markdown')
     
     except Exception as e:
         logger.error(f"Error in progress_command: {e}", exc_info=True)
-        await update.message.reply_text("❌ An error occurred loading progress.")
+        await update.message.reply_text("❌ Произошла ошибка при загрузке прогресса.")
 
 
 async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Search for content"""
     if not context.args:
-        await update.message.reply_text("Usage: /search <query>\n\nExample: /search sales funnel")
+        await update.message.reply_text("Использование: /search <запрос>\n\nПример: /search воронка продаж")
         return
     
     query_text = ' '.join(context.args)
@@ -614,38 +723,38 @@ async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             
             if response.status_code != 200:
-                await update.message.reply_text("❌ Search failed.")
+                await update.message.reply_text("❌ Поиск не удался.")
                 return
             
             results = response.json()
             
-            message = f"🔍 *Search Results for '{query_text}'*\n\n"
+            message = f"🔍 *Результаты поиска для '{query_text}'*\n\n"
             
             modules = results.get('modules', [])
             lessons = results.get('lessons', [])
             
             if modules:
-                message += "*Modules:*\n"
+                message += "*Модули:*\n"
                 for module in modules[:5]:
                     message += f"📘 {module['title']}\n"
                 message += "\n"
             
             if lessons:
-                message += "*Lessons:*\n"
+                message += "*Уроки:*\n"
                 for lesson_info in lessons[:5]:
-                    message += f"📖 {lesson_info['lesson']['title']} (in {lesson_info['module_title']})\n"
+                    message += f"📖 {lesson_info['lesson']['title']} (в {lesson_info['module_title']})\n"
                 message += "\n"
             
             if not modules and not lessons:
-                message += "No results found. Try a different search term."
+                message += "Результатов не найдено. Попробуйте другой поисковый запрос."
             else:
-                message += "Use /academy to access these modules."
+                message += "Используйте /academy для доступа к этим модулям."
             
             await update.message.reply_text(message, parse_mode='Markdown')
     
     except Exception as e:
         logger.error(f"Error in search_command: {e}", exc_info=True)
-        await update.message.reply_text("❌ An error occurred during search.")
+        await update.message.reply_text("❌ Произошла ошибка во время поиска.")
 
 
 async def back_to_modules(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -658,10 +767,12 @@ async def back_to_modules(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(f"{BACKEND_URL}/academy/v1/modules")
+            # Get user_id for role-based filtering
+            user_id = str(query.from_user.id)
+            response = await client.get(f"{BACKEND_URL}/academy/v1/modules?user_id={user_id}")
             
             if response.status_code != 200:
-                await query.edit_message_text("❌ Failed to load modules.")
+                await query.edit_message_text("❌ Не удалось загрузить модули.")
                 return SELECTING_MODULE
             
             modules = response.json()
@@ -669,18 +780,18 @@ async def back_to_modules(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Create keyboard with module buttons
             keyboard = []
             for module in modules:
-                button_text = f"{module['title']} (Level {module['level']})"
+                button_text = f"{module['title']} (Уровень {module['level']})"
                 keyboard.append([InlineKeyboardButton(
                     button_text,
                     callback_data=f"module:{module['id']}"
                 )])
             
-            keyboard.append([InlineKeyboardButton("❌ Close", callback_data="close")])
+            keyboard.append([InlineKeyboardButton("❌ Закрыть", callback_data="close")])
             
             reply_markup = InlineKeyboardMarkup(keyboard)
             
-            message = "📚 *Available Training Modules*\n\n"
-            message += "Select a module to start learning:\n"
+            message = "📚 *Доступные обучающие модули*\n\n"
+            message += "Выберите модуль для начала обучения:\n"
             
             await query.edit_message_text(
                 message,
@@ -706,7 +817,7 @@ async def close_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Cancel the conversation"""
-    await update.message.reply_text("Operation cancelled.")
+    await update.message.reply_text("Операция отменена.")
     return ConversationHandler.END
 
 
@@ -737,6 +848,7 @@ def main():
                 CallbackQueryHandler(lesson_selected, pattern='^lesson:'),
                 CallbackQueryHandler(test_selected, pattern='^test:'),
                 CallbackQueryHandler(complete_lesson, pattern='^complete:'),
+                CallbackQueryHandler(show_tts_voice_menu, pattern='^tts_menu:'),
                 CallbackQueryHandler(request_tts, pattern='^tts:'),
                 CallbackQueryHandler(lesson_navigation, pattern='^lesson_(next|prev)$'),
                 CallbackQueryHandler(module_selected, pattern='^module:'),
@@ -760,6 +872,9 @@ def main():
     application.add_handler(CommandHandler("progress", progress_command))
     application.add_handler(CommandHandler("search", search_command))
     application.add_handler(conv_handler)
+    
+    # Role selection handler (separate from academy flow)
+    application.add_handler(CallbackQueryHandler(role_selected, pattern='^role:'))
     
     # Start bot
     logger.info("🤖 SALESBOT Training Bot starting...")

@@ -76,6 +76,8 @@ class AcademyModule(BaseModel):
     lessons: List[AcademyLesson] = Field(default_factory=list)
     tests: List[AcademyTest] = Field(default_factory=list)
     estimated_duration_minutes: Optional[int] = None
+    f_block: Optional[str] = None  # F1-F7 блок
+    products: List[str] = Field(default_factory=list)  # P1-P5 продукты
     
     class Config:
         json_schema_extra = {
@@ -100,6 +102,8 @@ class ModuleListItem(BaseModel):
     level: int
     lessons_count: int
     tests_count: int
+    f_block: Optional[str] = None
+    products: List[str] = Field(default_factory=list)
 
 
 class LessonListItem(BaseModel):
@@ -158,4 +162,4 @@ class LessonCompletionRequest(BaseModel):
 
 class TTSRequest(BaseModel):
     """Request for text-to-speech generation"""
-    voice_type: str = "default"
+    voice_type: str = "ru_female"  # ru_female or ru_male

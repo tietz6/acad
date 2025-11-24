@@ -66,7 +66,9 @@ class ModuleRepository:
                     'level': data.get('level', 1),
                     'lessons': lessons,
                     'tests': tests,
-                    'estimated_duration_minutes': data.get('estimated_duration_minutes')
+                    'estimated_duration_minutes': data.get('estimated_duration_minutes'),
+                    'f_block': data.get('f_block'),
+                    'products': data.get('products', [])
                 }
                 
                 module = AcademyModule(**module_data)
@@ -83,7 +85,7 @@ class ModuleRepository:
         List all modules, optionally filtered by role
         
         Args:
-            role: Filter modules by role (e.g., "sales", "production")
+            role: Filter modules by role (e.g., "sales_manager", "generator")
         
         Returns:
             List of modules
@@ -91,7 +93,8 @@ class ModuleRepository:
         modules = list(self.modules.values())
         
         if role:
-            modules = [m for m in modules if role in m.roles or len(m.roles) == 0]
+            # Filter: include if role matches, or if module has "all" in roles, or if roles is empty
+            modules = [m for m in modules if role in m.roles or "all" in m.roles or len(m.roles) == 0]
         
         return sorted(modules, key=lambda m: (m.level, m.title))
     

@@ -4,7 +4,7 @@ FastAPI Router for Academy Module
 import os
 import logging
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, Header
 from fastapi.responses import JSONResponse
 import httpx
 
@@ -35,17 +35,22 @@ router = APIRouter(
 
 
 @router.get("/modules", response_model=List[ModuleListItem])
-async def list_modules(role: Optional[str] = None):
+async def list_modules(role: Optional[str] = None, user_id: Optional[str] = None):
     """
     List all available training modules
     
     Args:
-        role: Optional filter by role (e.g., 'sales', 'production')
+        role: Optional filter by role (e.g., 'sales_manager', 'generator')
+        user_id: Optional user ID to filter by user's role
     
     Returns:
         List of modules
     """
     try:
+        # If user_id provided, get their role
+        if user_id and not role:
+            role = progress_repo.get_user_role(user_id)
+        
         modules = service.get_modules_list(role)
         return modules
     except Exception as e:
@@ -325,6 +330,208 @@ async def get_next_lesson(module_id: str, user_id: str):
         "completed": False,
         "lesson": lesson
     }
+
+
+# User role management endpoints
+@router.post("/users/{user_id}/role")
+async def set_user_role(user_id: str, role_data: dict = Body(...)):
+    """
+    Set or update user's role
+    
+    Args:
+        user_id: User identifier
+        role_data: JSON with 'role' field
+    
+    Returns:
+        Success message with role
+    """
+    role = role_data.get('role')
+    if not role:
+        raise HTTPException(status_code=400, detail="Role is required")
+    
+    valid_roles = ['sales_manager', 'generator', 'admin', 'other']
+    if role not in valid_roles:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid role. Must be one of: {', '.join(valid_roles)}"
+        )
+    
+    progress_repo.set_user_role(user_id, role)
+    
+    return {
+        "success": True,
+        "user_id": user_id,
+        "role": role,
+        "message": f"Role set to {role}"
+    }
+
+
+@router.get("/users/{user_id}/role")
+async def get_user_role(user_id: str):
+    """
+    Get user's current role
+    
+    Args:
+        user_id: User identifier
+    
+    Returns:
+        User role information
+    """
+    role = progress_repo.get_user_role(user_id)
+    
+    return {
+        "user_id": user_id,
+        "role": role if role else "not_set"
+    }
+
+
+# Admin analytics endpoints
+def verify_admin_token(x_admin_token: Optional[str] = Header(None)):
+    """Verify admin API key"""
+    admin_key = os.getenv("ADMIN_API_KEY")
+    if not admin_key:
+        # If no admin key is set in production, this is a misconfiguration
+        # In development, we allow access for testing
+        import sys
+        if 'pytest' not in sys.modules and os.getenv("ENVIRONMENT") == "production":
+            raise HTTPException(
+                status_code=500,
+                detail="Server misconfiguration: ADMIN_API_KEY not set"
+            )
+        return True
+    
+    if not x_admin_token or x_admin_token != admin_key:
+        raise HTTPException(
+            status_code=401,
+            detail="Unauthorized: Invalid or missing X-Admin-Token header"
+        )
+    return True
+
+
+@router.get("/admin/users")
+async def get_all_users(x_admin_token: Optional[str] = Header(None)):
+    """
+    Get list of all users with their progress
+    
+    Requires X-Admin-Token header
+    
+    Returns:
+        List of users with stats
+    """
+    verify_admin_token(x_admin_token)
+    
+    try:
+        users = progress_repo.get_all_users()
+        return {
+            "total_users": len(users),
+            "users": users
+        }
+    except Exception as e:
+        logger.error(f"Error getting all users: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/admin/users/{user_id}/progress")
+async def get_admin_user_progress(user_id: str, x_admin_token: Optional[str] = Header(None)):
+    """
+    Get detailed progress for a specific user (admin view)
+    
+    Requires X-Admin-Token header
+    
+    Args:
+        user_id: User identifier
+    
+    Returns:
+        Detailed user progress
+    """
+    verify_admin_token(x_admin_token)
+    
+    try:
+        # Get user role
+        role = progress_repo.get_user_role(user_id)
+        
+        # Get progress summary
+        summary = service.get_user_progress_summary(user_id)
+        
+        # Get test results
+        test_results = progress_repo.get_test_results(user_id)
+        
+        return {
+            "user_id": user_id,
+            "role": role,
+            "summary": summary,
+            "test_results": test_results
+        }
+    except Exception as e:
+        logger.error(f"Error getting admin user progress: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/admin/stats/summary")
+async def get_admin_stats_summary(x_admin_token: Optional[str] = Header(None)):
+    """
+    Get aggregated statistics across all users
+    
+    Requires X-Admin-Token header
+    
+    Returns:
+        Summary statistics
+    """
+    verify_admin_token(x_admin_token)
+    
+    try:
+        users = progress_repo.get_all_users()
+        all_modules = module_repo.list_modules()
+        
+        # Calculate aggregate stats
+        total_users = len(users)
+        users_with_progress = sum(1 for u in users if u['completed_lessons'] > 0)
+        
+        # Module completion stats
+        module_completions = {}
+        for user in users:
+            progress = progress_repo.get_user_progress(user['user_id'])
+            for module in all_modules:
+                module_lessons = {lesson.id for lesson in module.lessons}
+                completed_lessons = {
+                    p.lesson_id for p in progress 
+                    if p.module_id == module.id and p.status == 'completed'
+                }
+                
+                if module_lessons and module_lessons.issubset(completed_lessons):
+                    module_completions[module.id] = module_completions.get(module.id, 0) + 1
+        
+        # Top modules
+        top_modules = sorted(
+            module_completions.items(), 
+            key=lambda x: x[1], 
+            reverse=True
+        )[:3]
+        
+        # Average completion rate
+        total_lessons = sum(len(m.lessons) for m in all_modules)
+        total_completed = sum(u['completed_lessons'] for u in users)
+        avg_completion = (total_completed / (total_users * total_lessons * 1.0) * 100) if total_users > 0 and total_lessons > 0 else 0
+        
+        return {
+            "total_users": total_users,
+            "users_with_progress": users_with_progress,
+            "total_modules": len(all_modules),
+            "average_completion_rate": round(avg_completion, 2),
+            "top_modules": [
+                {
+                    "module_id": mid,
+                    "completions": count,
+                    "title": next((m.title for m in all_modules if m.id == mid), mid)
+                }
+                for mid, count in top_modules
+            ],
+            "total_lessons_available": total_lessons,
+            "total_lessons_completed": total_completed
+        }
+    except Exception as e:
+        logger.error(f"Error getting admin stats: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Health check for the academy module
