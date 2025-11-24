@@ -1,8 +1,10 @@
 """
-Module Repository - Loads training modules from YAML files
+Module Repository - Loads training modules from YAML files and Python modules
 """
 import os
+import sys
 import logging
+import importlib.util
 from pathlib import Path
 from typing import List, Optional, Dict
 import yaml
@@ -22,11 +24,22 @@ class ModuleRepository:
             data_dir = base_dir / "data" / "academy" / "modules"
         
         self.data_dir = Path(data_dir)
+        self.modules_dir = Path(__file__).parent  # Directory containing Python modules
         self.modules: Dict[str, AcademyModule] = {}
         self._load_modules()
     
     def _load_modules(self):
-        """Load all modules from YAML files"""
+        """Load all modules from YAML files and Python module files"""
+        # Load YAML modules from data directory
+        self._load_yaml_modules()
+        
+        # Load Python modules from modules/academy directory
+        self._load_python_modules()
+        
+        logger.info(f"Total modules loaded: {len(self.modules)}")
+    
+    def _load_yaml_modules(self):
+        """Load modules from YAML files"""
         if not self.data_dir.exists():
             logger.warning(f"Modules data directory does not exist: {self.data_dir}")
             return
@@ -77,8 +90,76 @@ class ModuleRepository:
                 
             except Exception as e:
                 logger.error(f"Failed to load module from {yaml_file}: {e}", exc_info=True)
+    
+    def _load_python_modules(self):
+        """Load modules from Python module files (module_*.py)"""
+        if not self.modules_dir.exists():
+            logger.warning(f"Modules directory does not exist: {self.modules_dir}")
+            return
         
-        logger.info(f"Total modules loaded: {len(self.modules)}")
+        # Find all module_*.py files
+        module_files = list(self.modules_dir.glob("module_*.py"))
+        
+        for module_file in module_files:
+            try:
+                # Dynamically import the module
+                module_name = module_file.stem
+                spec = importlib.util.spec_from_file_location(module_name, module_file)
+                if spec and spec.loader:
+                    py_module = importlib.util.module_from_spec(spec)
+                    sys.modules[module_name] = py_module
+                    spec.loader.exec_module(py_module)
+                    
+                    # Check if module has required attributes
+                    if not hasattr(py_module, 'module_id'):
+                        logger.warning(f"Module {module_name} missing 'module_id' attribute")
+                        continue
+                    
+                    # Extract module data
+                    module_id = py_module.module_id
+                    title = getattr(py_module, 'title', 'Untitled')
+                    description = getattr(py_module, 'description', '')
+                    role_visibility = getattr(py_module, 'role_visibility', [])
+                    estimated_duration_minutes = getattr(py_module, 'estimated_duration_minutes', None)
+                    
+                    # Parse lessons with content_ru support
+                    lessons = []
+                    for idx, lesson_data in enumerate(getattr(py_module, 'lessons', [])):
+                        # Support both 'content' and 'content_ru'
+                        if 'content_ru' in lesson_data and 'content' not in lesson_data:
+                            lesson_data['content'] = lesson_data['content_ru']
+                        lesson_data['order'] = lesson_data.get('order', idx + 1)
+                        lessons.append(AcademyLesson(**lesson_data))
+                    
+                    # Parse tests
+                    tests = []
+                    for test_data in getattr(py_module, 'tests', []):
+                        questions = []
+                        for q_data in test_data.get('questions', []):
+                            questions.append(AcademyQuestion(**q_data))
+                        test_data['questions'] = questions
+                        tests.append(AcademyTest(**test_data))
+                    
+                    # Create module
+                    module_data = {
+                        'id': module_id,
+                        'title': title,
+                        'description': description,
+                        'roles': role_visibility,
+                        'level': getattr(py_module, 'level', 1),
+                        'lessons': lessons,
+                        'tests': tests,
+                        'estimated_duration_minutes': estimated_duration_minutes,
+                        'f_block': getattr(py_module, 'f_block', None),
+                        'products': getattr(py_module, 'products', [])
+                    }
+                    
+                    module = AcademyModule(**module_data)
+                    self.modules[module.id] = module
+                    logger.info(f"Loaded Python module: {module.id} - {module.title}")
+                    
+            except Exception as e:
+                logger.error(f"Failed to load Python module from {module_file}: {e}", exc_info=True)
     
     def list_modules(self, role: Optional[str] = None) -> List[AcademyModule]:
         """
