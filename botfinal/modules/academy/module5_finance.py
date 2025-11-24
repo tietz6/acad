@@ -8,6 +8,7 @@ title = "Модуль 5 — Финансы (F5)"
 description = "Основы финансового учёта, ценообразования и управления бюджетами проектов"
 role_visibility = ["admin", "sales_manager"]
 estimated_duration_minutes = 60
+keywords = ["финансы", "ценообразование", "бюджет", "учёт", "прибыль", "расходы", "доход"]
 
 lessons = [
     {

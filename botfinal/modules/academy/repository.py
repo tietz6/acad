@@ -26,6 +26,7 @@ class ModuleRepository:
         self.data_dir = Path(data_dir)
         self.modules_dir = Path(__file__).parent  # Directory containing Python modules
         self.modules: Dict[str, AcademyModule] = {}
+        self._module_keywords: Dict[str, List[str]] = {}  # Store keywords separately
         self._load_modules()
     
     def _load_modules(self):
@@ -156,9 +157,13 @@ class ModuleRepository:
                     }
                     
                     module = AcademyModule(**module_data)
-                    # Store keywords as an attribute (not part of Pydantic model)
-                    module.keywords = keywords
                     self.modules[module.id] = module
+                    
+                    # Store keywords in a separate dictionary for search
+                    if not hasattr(self, '_module_keywords'):
+                        self._module_keywords = {}
+                    self._module_keywords[module.id] = keywords
+                    
                     logger.info(f"Loaded Python module: {module.id} - {module.title}")
                     
             except Exception as e:
@@ -259,8 +264,8 @@ class ModuleRepository:
             if query_lower in module.title.lower() or query_lower in module.description.lower():
                 module_matched = True
             
-            # Search in keywords if available (check module attributes)
-            keywords = getattr(module, 'keywords', [])
+            # Search in keywords if available
+            keywords = self._module_keywords.get(module.id, [])
             if isinstance(keywords, list):
                 for keyword in keywords:
                     if query_lower in str(keyword).lower():
@@ -303,4 +308,5 @@ class ModuleRepository:
     def reload(self):
         """Reload all modules from disk"""
         self.modules.clear()
+        self._module_keywords.clear()
         self._load_modules()

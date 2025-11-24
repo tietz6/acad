@@ -16,6 +16,7 @@ from .repository import ModuleRepository
 from .progress_repository import ProgressRepository
 from .service import AcademyService
 from .tts_service import tts_service
+from .notification_service import notification_service
 
 logger = logging.getLogger(__name__)
 
@@ -670,32 +671,76 @@ async def get_user_profile(user_id: str):
 
 # Reload modules endpoint
 @router.post("/admin/reload")
-async def reload_modules(x_admin_token: Optional[str] = Header(None)):
+async def reload_modules(
+    x_admin_token: Optional[str] = Header(None),
+    notify_users: bool = False
+):
     """
     Reload all modules from disk (admin only)
     
     Requires X-Admin-Token header
     
+    Args:
+        notify_users: If True, notify all users about new modules
+    
     Returns:
-        Reload status
+        Reload status with list of new modules
     """
     verify_admin_token(x_admin_token)
     
     try:
-        # Get modules count before reload
-        old_count = len(module_repo.list_modules())
+        # Get module IDs before reload
+        old_modules = {m.id: m for m in module_repo.list_modules()}
+        old_count = len(old_modules)
         
         # Reload modules
         module_repo.reload()
         
-        # Get modules count after reload
-        new_count = len(module_repo.list_modules())
+        # Get module IDs after reload
+        new_modules = {m.id: m for m in module_repo.list_modules()}
+        new_count = len(new_modules)
+        
+        # Detect new modules
+        new_module_ids = set(new_modules.keys()) - set(old_modules.keys())
+        new_modules_info = []
+        
+        for module_id in new_module_ids:
+            module = new_modules[module_id]
+            new_modules_info.append({
+                "id": module.id,
+                "title": module.title,
+                "description": module.description
+            })
+        
+        # Send notifications if requested and there are new modules
+        notifications_sent = False
+        if notify_users and new_modules_info:
+            try:
+                # Get all users
+                all_users = progress_repo.get_all_users()
+                user_ids = [user['user_id'] for user in all_users]
+                
+                # Send notification for each new module
+                for module_info in new_modules_info:
+                    await notification_service.notify_new_module(
+                        module_title=module_info['title'],
+                        module_description=module_info['description'],
+                        user_ids=user_ids
+                    )
+                
+                notifications_sent = True
+                logger.info(f"Sent notifications about {len(new_modules_info)} new modules to {len(user_ids)} users")
+            
+            except Exception as notif_error:
+                logger.error(f"Error sending notifications: {notif_error}", exc_info=True)
         
         return {
             "success": True,
             "message": "Modules reloaded successfully",
             "modules_before": old_count,
-            "modules_after": new_count
+            "modules_after": new_count,
+            "new_modules": new_modules_info,
+            "notifications_sent": notifications_sent
         }
     except Exception as e:
         logger.error(f"Error reloading modules: {e}", exc_info=True)
