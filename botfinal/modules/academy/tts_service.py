@@ -5,6 +5,7 @@ Supports multiple TTS providers including AssemblyAI and gTTS
 import os
 import logging
 import uuid
+import time
 import httpx
 from pathlib import Path
 from typing import Optional, Literal
@@ -171,8 +172,6 @@ class TTSService:
         Args:
             max_age_hours: Maximum age of files to keep (default: 24 hours)
         """
-        import time
-        
         try:
             current_time = time.time()
             max_age_seconds = max_age_hours * 3600
