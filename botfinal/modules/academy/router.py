@@ -604,7 +604,6 @@ async def get_user_profile(user_id: str):
         badges = progress_repo.get_user_badges(user_id)
         
         # Get user info from database
-        conn = progress_repo._get_connection() if hasattr(progress_repo, '_get_connection') else None
         import sqlite3
         conn = sqlite3.connect(str(progress_repo.db_path))
         conn.row_factory = sqlite3.Row

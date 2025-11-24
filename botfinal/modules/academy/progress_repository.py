@@ -498,15 +498,31 @@ class ProgressRepository:
         
         today = date.today().isoformat()
         
+        # Check if record exists
         cursor.execute("""
-            INSERT INTO academy_daily_progress 
-            (user_id, date, lessons_completed, minutes_studied, tests_passed)
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(user_id, date) DO UPDATE SET
-                lessons_completed = lessons_completed + excluded.lessons_completed,
-                minutes_studied = minutes_studied + excluded.minutes_studied,
-                tests_passed = tests_passed + excluded.tests_passed
-        """, (user_id, today, lessons_completed, minutes_studied, tests_passed))
+            SELECT lessons_completed, minutes_studied, tests_passed 
+            FROM academy_daily_progress 
+            WHERE user_id = ? AND date = ?
+        """, (user_id, today))
+        
+        existing = cursor.fetchone()
+        
+        if existing:
+            # Update existing record
+            cursor.execute("""
+                UPDATE academy_daily_progress 
+                SET lessons_completed = lessons_completed + ?,
+                    minutes_studied = minutes_studied + ?,
+                    tests_passed = tests_passed + ?
+                WHERE user_id = ? AND date = ?
+            """, (lessons_completed, minutes_studied, tests_passed, user_id, today))
+        else:
+            # Insert new record
+            cursor.execute("""
+                INSERT INTO academy_daily_progress 
+                (user_id, date, lessons_completed, minutes_studied, tests_passed)
+                VALUES (?, ?, ?, ?, ?)
+            """, (user_id, today, lessons_completed, minutes_studied, tests_passed))
         
         conn.commit()
         conn.close()

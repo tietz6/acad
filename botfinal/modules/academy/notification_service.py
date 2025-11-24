@@ -46,22 +46,35 @@ class NotificationService:
         # Log notification
         self._log_notification("new_module", module_title, len(user_ids))
         
-        # Send notifications asynchronously
+        # Send notifications asynchronously in batches
         try:
             import httpx
             
+            batch_size = 100  # Process 100 users at a time to avoid rate limits
+            total_sent = 0
+            
             async with httpx.AsyncClient(timeout=10.0) as client:
-                tasks = []
-                for user_id in user_ids[:100]:  # Limit to 100 users at once to avoid rate limits
-                    task = self._send_telegram_message(client, user_id, message)
-                    tasks.append(task)
+                # Process in batches
+                for i in range(0, len(user_ids), batch_size):
+                    batch = user_ids[i:i+batch_size]
+                    tasks = []
+                    
+                    for user_id in batch:
+                        task = self._send_telegram_message(client, user_id, message)
+                        tasks.append(task)
+                    
+                    # Send batch
+                    results = await asyncio.gather(*tasks, return_exceptions=True)
+                    
+                    # Count successes in this batch
+                    batch_success = sum(1 for r in results if r is True)
+                    total_sent += batch_success
+                    
+                    # Small delay between batches to avoid rate limits
+                    if i + batch_size < len(user_ids):
+                        await asyncio.sleep(1)
                 
-                # Send in batches
-                results = await asyncio.gather(*tasks, return_exceptions=True)
-                
-                # Count successes
-                success_count = sum(1 for r in results if r is True)
-                logger.info(f"Sent {success_count}/{len(user_ids)} notifications for new module: {module_title}")
+                logger.info(f"Sent {total_sent}/{len(user_ids)} notifications for new module: {module_title}")
         
         except Exception as e:
             logger.error(f"Error sending notifications: {e}", exc_info=True)
