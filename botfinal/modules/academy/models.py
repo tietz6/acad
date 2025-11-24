@@ -1,7 +1,7 @@
 """
 Pydantic models for Academy module
 """
-from typing import List, Optional, Literal, Dict
+from typing import List, Optional, Literal, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -244,13 +244,13 @@ class MegaStats(BaseModel):
     users_by_role: Dict[str, int]
     
     # По модулям
-    top_modules: List[Dict[str, any]]
-    hardest_modules: List[Dict[str, any]]
-    unused_modules: List[Dict[str, any]]
+    top_modules: List[Dict[str, Any]]
+    hardest_modules: List[Dict[str, Any]]
+    unused_modules: List[Dict[str, Any]]
     
     # По тестам
     average_score: float
-    failing_questions: List[Dict[str, any]]
-    low_performance_modules: List[Dict[str, any]]
+    failing_questions: List[Dict[str, Any]]
+    low_performance_modules: List[Dict[str, Any]]
     
     generated_at: datetime = Field(default_factory=datetime.now)
