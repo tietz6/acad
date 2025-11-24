@@ -121,6 +121,7 @@ class ModuleRepository:
                     description = getattr(py_module, 'description', '')
                     role_visibility = getattr(py_module, 'role_visibility', [])
                     estimated_duration_minutes = getattr(py_module, 'estimated_duration_minutes', None)
+                    keywords = getattr(py_module, 'keywords', [])
                     
                     # Parse lessons with content_ru support
                     lessons = []
@@ -155,6 +156,8 @@ class ModuleRepository:
                     }
                     
                     module = AcademyModule(**module_data)
+                    # Store keywords as an attribute (not part of Pydantic model)
+                    module.keywords = keywords
                     self.modules[module.id] = module
                     logger.info(f"Loaded Python module: {module.id} - {module.title}")
                     
@@ -235,10 +238,10 @@ class ModuleRepository:
     
     def search(self, query: str) -> Dict[str, List]:
         """
-        Search modules and lessons by query string
+        Search modules and lessons by query string (enhanced global search)
         
         Args:
-            query: Search query (substring match in titles/content)
+            query: Search query (substring match in titles/content/tests/keywords)
         
         Returns:
             Dictionary with 'modules' and 'lessons' lists
@@ -250,11 +253,43 @@ class ModuleRepository:
         }
         
         for module in self.modules.values():
+            module_matched = False
+            
             # Search in module title and description
             if query_lower in module.title.lower() or query_lower in module.description.lower():
+                module_matched = True
+            
+            # Search in keywords if available (check module attributes)
+            keywords = getattr(module, 'keywords', [])
+            if isinstance(keywords, list):
+                for keyword in keywords:
+                    if query_lower in str(keyword).lower():
+                        module_matched = True
+                        break
+            
+            # Search in tests
+            if not module_matched:
+                for test in module.tests:
+                    if query_lower in test.title.lower():
+                        module_matched = True
+                        break
+                    # Search in test questions
+                    for question in test.questions:
+                        if query_lower in question.question.lower():
+                            module_matched = True
+                            break
+                        # Search in answer options
+                        for option in question.options:
+                            if query_lower in option.lower():
+                                module_matched = True
+                                break
+                    if module_matched:
+                        break
+            
+            if module_matched:
                 results['modules'].append(module)
             
-            # Search in lessons
+            # Search in lessons (title and content)
             for lesson in module.lessons:
                 if query_lower in lesson.title.lower() or query_lower in lesson.content.lower():
                     results['lessons'].append({

@@ -38,14 +38,16 @@ class TTSService:
     async def generate_tts(
         self,
         text: str,
-        voice_type: Literal["ru_female", "ru_male"] = "ru_female"
+        voice_type: Literal["ru_female", "ru_male"] = "ru_female",
+        cache_key: Optional[str] = None
     ) -> dict:
         """
-        Generate TTS audio from text
+        Generate TTS audio from text with caching support
         
         Args:
             text: Text to convert to speech
             voice_type: Voice type (ru_female or ru_male)
+            cache_key: Optional cache key for consistent file naming (e.g., lesson_id)
         
         Returns:
             Dictionary with audio_url, file_path, and metadata
@@ -53,7 +55,7 @@ class TTSService:
         if self.use_assemblyai:
             return await self._generate_assemblyai_tts(text, voice_type)
         else:
-            return await self._generate_gtts(text, voice_type)
+            return await self._generate_gtts(text, voice_type, cache_key)
     
     async def _generate_assemblyai_tts(
         self,
@@ -128,27 +130,59 @@ class TTSService:
     async def _generate_gtts(
         self,
         text: str,
-        voice_type: str
+        voice_type: str,
+        cache_key: Optional[str] = None
     ) -> dict:
         """
-        Generate TTS using Google Text-to-Speech (gTTS)
+        Generate TTS using Google Text-to-Speech (gTTS) with caching support
         
         Args:
             text: Text to convert to speech
             voice_type: Voice type (ru_female or ru_male) - note: gTTS doesn't distinguish
+            cache_key: Optional cache key (e.g., lesson_id) for consistent file naming
         
         Returns:
             Dictionary with audio_url, file_path, and metadata
         """
         try:
-            # Generate unique filename
-            filename = f"{uuid.uuid4()}.mp3"
+            # Generate filename with caching support
+            if cache_key:
+                # Use cache key for consistent naming
+                filename = f"{cache_key}_{voice_type}.mp3"
+            else:
+                # Fallback to unique filename
+                filename = f"{uuid.uuid4()}.mp3"
+            
             filepath = TTS_DATA_DIR / filename
             
+            # Check if cached file exists
+            if filepath.exists():
+                logger.info(f"Using cached TTS audio: {filename}")
+                return {
+                    "success": True,
+                    "audio_url": f"/data/tts/{filename}",
+                    "file_path": str(filepath),
+                    "voice_type": voice_type,
+                    "provider": "gtts",
+                    "language": "ru",
+                    "cached": True
+                }
+            
             # Generate TTS (gTTS doesn't have gender selection, but accepts the parameter)
-            # We use Russian language
-            tts = gTTS(text=text, lang='ru', slow=False)
-            tts.save(str(filepath))
+            # We use Russian language with timeout protection
+            try:
+                tts = gTTS(text=text, lang='ru', slow=False, timeout=30)
+                tts.save(str(filepath))
+            except Exception as gtts_error:
+                logger.error(f"gTTS timeout or error: {gtts_error}")
+                # Retry once with shorter text if needed
+                if len(text) > 5000:
+                    logger.warning("Text too long, truncating for TTS")
+                    text = text[:5000] + "..."
+                    tts = gTTS(text=text, lang='ru', slow=False, timeout=30)
+                    tts.save(str(filepath))
+                else:
+                    raise
             
             logger.info(f"Generated TTS audio via gTTS: {filename} (voice: {voice_type})")
             
@@ -158,7 +192,8 @@ class TTSService:
                 "file_path": str(filepath),
                 "voice_type": voice_type,
                 "provider": "gtts",
-                "language": "ru"
+                "language": "ru",
+                "cached": False
             }
         
         except Exception as e:
