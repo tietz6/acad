@@ -190,6 +190,28 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 🔄 /reload - Перезагрузить модули (только для admin)
 
+*🆕 V3 - Новые функции:*
+
+⭐ /level - Ваш уровень и опыт
+   • Просмотр текущего уровня
+   • XP и ранг
+   • Прогресс до следующего уровня
+
+📋 /plan - Персональный план обучения
+   • Рекомендуемые уроки
+   • Адаптивный план на 7 дней
+
+🔄 /plan_refresh - Обновить план обучения
+   • Пересоздать план
+
+🎯 /quests - Ежедневные задания
+   • Активные квесты
+   • Награды XP
+
+🎙️ /tts_settings - Настройки озвучки
+   • Выбор голоса
+   • Скорость воспроизведения
+
 ❓ /help - Показать это справочное сообщение
 
 💡 *Советы:*
@@ -1072,6 +1094,7 @@ async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             keyboard = [
                 [InlineKeyboardButton("📊 Статистика по сотрудникам", callback_data="admin:users_stats")],
                 [InlineKeyboardButton("📚 Статистика по модулям", callback_data="admin:modules_stats")],
+                [InlineKeyboardButton("🎯 Мегастатистика (V3)", callback_data="admin:mega_stats")],
                 [InlineKeyboardButton("📝 Результаты тестов", callback_data="admin:test_results")],
                 [InlineKeyboardButton("🔄 Перезагрузить модули", callback_data="admin:reload")],
                 [InlineKeyboardButton("👥 Список пользователей", callback_data="admin:users_list")],
@@ -1158,6 +1181,59 @@ async def admin_callback_handler(update: Update, context: ContextTypes.DEFAULT_T
             elif action == "test_results":
                 await query.edit_message_text("📝 *Результаты тестов*\n\nФункция в разработке. Используйте /admin для других опций.", parse_mode='Markdown')
             
+            elif action == "mega_stats":
+                # V3: Мегастатистика
+                response = await client.get(
+                    f"{BACKEND_URL}/academy/v1/admin/mega_stats",
+                    headers=headers
+                )
+                
+                if response.status_code == 200:
+                    stats = response.json()
+                    
+                    message = "🎯 *МЕГАСТАТИСТИКА*\n\n"
+                    
+                    # Общие данные
+                    message += "*📊 Общие данные:*\n"
+                    message += f"👥 Всего пользователей: {stats['total_users']}\n"
+                    message += f"✅ Активных сегодня: {stats['active_today']}\n"
+                    message += f"📅 Активных за неделю: {stats['active_week']}\n"
+                    message += f"📆 Активных за месяц: {stats['active_month']}\n\n"
+                    
+                    # По ролям
+                    if stats.get('users_by_role'):
+                        message += "*👔 По ролям:*\n"
+                        role_names = {
+                            'sales_manager': 'Менеджеры',
+                            'generator': 'Генераторы',
+                            'admin': 'Админы',
+                            'other': 'Другие'
+                        }
+                        for role, count in stats['users_by_role'].items():
+                            role_display = role_names.get(role, role)
+                            message += f"  • {role_display}: {count}\n"
+                        message += "\n"
+                    
+                    # Топ модули
+                    if stats.get('top_modules'):
+                        message += "*📚 Топ-5 изучаемых модулей:*\n"
+                        for i, mod in enumerate(stats['top_modules'][:3], 1):
+                            message += f"{i}. {mod.get('title', mod['module_id'])}: {mod['user_count']} чел.\n"
+                        message += "\n"
+                    
+                    # Средний балл
+                    message += f"*📊 Средний балл по тестам:* {stats['average_score']:.1f}%\n\n"
+                    
+                    # Сложные модули
+                    if stats.get('hardest_modules'):
+                        message += "*😰 Самые сложные модули:*\n"
+                        for mod in stats['hardest_modules'][:3]:
+                            message += f"  • {mod.get('title', mod['module_id'])}: {mod['avg_score']:.0f}%\n"
+                    
+                    await query.edit_message_text(message, parse_mode='Markdown')
+                else:
+                    await query.edit_message_text("❌ Не удалось загрузить мегастатистику.")
+            
             elif action == "reload":
                 response = await client.post(
                     f"{BACKEND_URL}/academy/v1/admin/reload",
@@ -1209,6 +1285,220 @@ async def admin_callback_handler(update: Update, context: ContextTypes.DEFAULT_T
     except Exception as e:
         logger.error(f"Error in admin_callback_handler: {e}", exc_info=True)
         await query.edit_message_text("❌ Произошла ошибка.")
+
+
+# ========================================
+# V3 COMMANDS: Levels, Learning Plans, Quests, TTS Settings
+# ========================================
+
+async def level_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Показать уровень и опыт пользователя (V3)"""
+    user_id = str(update.effective_user.id)
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{BACKEND_URL}/academy/v1/user/{user_id}/level")
+            
+            if response.status_code == 200:
+                level_data = response.json()
+                
+                message = "⭐ *Ваш уровень и опыт*\n\n"
+                message += f"🏆 Ранг: *{level_data['rank_name']}*\n"
+                message += f"📊 Уровень: {level_data['level']}/10\n"
+                message += f"✨ Опыт: {level_data['xp']} XP\n"
+                
+                if level_data['level'] < 10:
+                    message += f"🎯 До следующего уровня: {level_data['xp_to_next']} XP\n\n"
+                else:
+                    message += "\n🌟 *Вы достигли максимального уровня!* 🌟\n\n"
+                
+                message += "*Как получить опыт:*\n"
+                message += "• Пройти урок: +10 XP\n"
+                message += "• Пройти тест: +30 XP\n"
+                message += "• Тест на 100%: +60 XP\n"
+                message += "• Ежедневная активность: +5 XP\n"
+                message += "• Выполнить квест: +10-50 XP\n"
+                
+                await update.message.reply_text(message, parse_mode='Markdown')
+            else:
+                await update.message.reply_text("❌ Не удалось загрузить информацию об уровне.")
+    
+    except Exception as e:
+        logger.error(f"Error in level_command: {e}", exc_info=True)
+        await update.message.reply_text("❌ Произошла ошибка при загрузке уровня.")
+
+
+async def plan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Показать персональный план обучения (V3)"""
+    user_id = str(update.effective_user.id)
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{BACKEND_URL}/academy/v1/plan/{user_id}")
+            
+            if response.status_code == 200:
+                plan_data = response.json()
+                items = plan_data.get('items', [])
+                
+                if not items:
+                    message = "📋 *Персональный план обучения*\n\n"
+                    message += "У вас пока нет активного плана.\n"
+                    message += "Используйте /plan_refresh для генерации нового плана."
+                else:
+                    message = "📋 *Ваш персональный план обучения*\n\n"
+                    message += f"📅 Создан: {plan_data['generated_at'][:10]}\n"
+                    message += f"⏰ Действует до: {plan_data['valid_until'][:10]}\n\n"
+                    
+                    # Группировать по статусу
+                    pending = [i for i in items if i['status'] == 'pending']
+                    active = [i for i in items if i['status'] == 'active']
+                    done = [i for i in items if i['status'] == 'done']
+                    
+                    if active:
+                        message += "*🔄 В процессе:*\n"
+                        for item in active[:3]:
+                            message += f"  • {item['module_id']} → {item['lesson_id']}\n"
+                        message += "\n"
+                    
+                    if pending:
+                        message += f"*📝 Запланировано ({len(pending)}):*\n"
+                        for item in pending[:5]:
+                            priority_emoji = "🔴" if item['priority'] >= 8 else "🟡" if item['priority'] >= 5 else "🟢"
+                            message += f"  {priority_emoji} {item['module_id']} → {item['lesson_id']}\n"
+                        if len(pending) > 5:
+                            message += f"  _...и ещё {len(pending) - 5}_\n"
+                        message += "\n"
+                    
+                    if done:
+                        message += f"✅ Завершено: {len(done)}\n"
+                    
+                    message += "\n💡 Используйте /plan_refresh для обновления плана"
+                
+                await update.message.reply_text(message, parse_mode='Markdown')
+            else:
+                await update.message.reply_text("❌ Не удалось загрузить план обучения.")
+    
+    except Exception as e:
+        logger.error(f"Error in plan_command: {e}", exc_info=True)
+        await update.message.reply_text("❌ Произошла ошибка при загрузке плана.")
+
+
+async def plan_refresh_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Сгенерировать новый персональный план обучения (V3)"""
+    user_id = str(update.effective_user.id)
+    
+    await update.message.reply_text("🔄 Генерирую персональный план обучения...\nЭто может занять несколько секунд.")
+    
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(f"{BACKEND_URL}/academy/v1/plan/{user_id}/generate")
+            
+            if response.status_code == 200:
+                plan_data = response.json()
+                items = plan_data.get('items', [])
+                
+                message = "✅ *Новый план обучения создан!*\n\n"
+                message += f"📚 Запланировано уроков: {len(items)}\n"
+                message += f"📅 Действует 7 дней\n\n"
+                message += "План создан на основе:\n"
+                message += "• Вашей роли\n"
+                message += "• Текущего прогресса\n"
+                message += "• Результатов тестов\n"
+                message += "• Незавершенных модулей\n\n"
+                message += "Используйте /plan для просмотра плана"
+                
+                await update.message.reply_text(message, parse_mode='Markdown')
+            else:
+                await update.message.reply_text("❌ Не удалось создать план обучения.")
+    
+    except Exception as e:
+        logger.error(f"Error in plan_refresh_command: {e}", exc_info=True)
+        await update.message.reply_text("❌ Произошла ошибка при создании плана.")
+
+
+async def quests_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Показать ежедневные квесты (V3)"""
+    user_id = str(update.effective_user.id)
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{BACKEND_URL}/academy/v1/quests/{user_id}")
+            
+            if response.status_code == 200:
+                quests = response.json()
+                
+                if not quests:
+                    message = "🎯 *Ежедневные задания*\n\n"
+                    message += "На сегодня нет активных заданий.\n"
+                    message += "Квесты обновляются каждый день!"
+                else:
+                    message = "🎯 *Ежедневные задания*\n\n"
+                    
+                    active_quests = [q for q in quests if q['status'] == 'active']
+                    completed_quests = [q for q in quests if q['status'] == 'completed']
+                    
+                    if active_quests:
+                        message += "*Активные:*\n"
+                        for quest in active_quests:
+                            type_emoji = {
+                                "lesson": "📖",
+                                "test": "📝",
+                                "streak": "🔥",
+                                "tts": "🔊",
+                                "module": "📚"
+                            }.get(quest['type'], "⭐")
+                            
+                            message += f"{type_emoji} {quest['description']}\n"
+                            message += f"   Награда: +{quest['reward_xp']} XP\n\n"
+                    
+                    if completed_quests:
+                        message += f"✅ *Выполнено сегодня: {len(completed_quests)}*\n\n"
+                    
+                    message += "💡 Квесты выполняются автоматически при совершении действий!"
+                
+                await update.message.reply_text(message, parse_mode='Markdown')
+            else:
+                await update.message.reply_text("❌ Не удалось загрузить квесты.")
+    
+    except Exception as e:
+        logger.error(f"Error in quests_command: {e}", exc_info=True)
+        await update.message.reply_text("❌ Произошла ошибка при загрузке квестов.")
+
+
+async def tts_settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Показать и настроить параметры TTS (V3)"""
+    user_id = str(update.effective_user.id)
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{BACKEND_URL}/academy/v1/tts/settings/{user_id}")
+            
+            if response.status_code == 200:
+                settings = response.json()
+                
+                voice_names = {
+                    "female": "Женский",
+                    "male": "Мужской",
+                    "neutral": "Нейтральный"
+                }
+                
+                message = "🎙️ *Настройки озвучки (TTS)*\n\n"
+                message += f"🔊 Голос: {voice_names.get(settings['voice'], settings['voice'])}\n"
+                message += f"⚡ Скорость: {settings['speed']}x\n"
+                message += f"📁 Формат: {settings['format'].upper()}\n\n"
+                message += "*Доступные настройки:*\n"
+                message += "• Голоса: женский, мужской, нейтральный\n"
+                message += "• Скорость: 1.0x, 1.25x, 1.5x\n"
+                message += "• Форматы: MP3, OGG\n\n"
+                message += "💡 Настройки применяются автоматически при генерации аудио"
+                
+                await update.message.reply_text(message, parse_mode='Markdown')
+            else:
+                await update.message.reply_text("❌ Не удалось загрузить настройки TTS.")
+    
+    except Exception as e:
+        logger.error(f"Error in tts_settings_command: {e}", exc_info=True)
+        await update.message.reply_text("❌ Произошла ошибка при загрузке настроек TTS.")
 
 
 def main():
@@ -1266,6 +1556,14 @@ def main():
     application.add_handler(CommandHandler("progress_daily", progress_daily_command))
     application.add_handler(CommandHandler("reload", reload_command))
     application.add_handler(CommandHandler("admin", admin_command))
+    
+    # V3 Commands
+    application.add_handler(CommandHandler("level", level_command))
+    application.add_handler(CommandHandler("plan", plan_command))
+    application.add_handler(CommandHandler("plan_refresh", plan_refresh_command))
+    application.add_handler(CommandHandler("quests", quests_command))
+    application.add_handler(CommandHandler("tts_settings", tts_settings_command))
+    
     application.add_handler(conv_handler)
     
     # Role selection handler (separate from academy flow)
