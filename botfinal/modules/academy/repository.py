@@ -92,13 +92,15 @@ class ModuleRepository:
                 logger.error(f"Failed to load module from {yaml_file}: {e}", exc_info=True)
     
     def _load_python_modules(self):
-        """Load modules from Python module files (module_*.py)"""
+        """Load modules from Python module files (module*.py and module_*.py)"""
         if not self.modules_dir.exists():
             logger.warning(f"Modules directory does not exist: {self.modules_dir}")
             return
         
-        # Find all module_*.py files
-        module_files = list(self.modules_dir.glob("module_*.py"))
+        # Find all module*.py files (both module4.py and module_p1.py patterns)
+        module_files = []
+        for pattern in ["module[0-9]*.py", "module_*.py"]:
+            module_files.extend(self.modules_dir.glob(pattern))
         
         for module_file in module_files:
             try:
