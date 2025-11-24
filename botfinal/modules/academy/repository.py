@@ -26,6 +26,7 @@ class ModuleRepository:
         self.data_dir = Path(data_dir)
         self.modules_dir = Path(__file__).parent  # Directory containing Python modules
         self.modules: Dict[str, AcademyModule] = {}
+        self._module_keywords: Dict[str, List[str]] = {}  # Store keywords separately
         self._load_modules()
     
     def _load_modules(self):
@@ -121,6 +122,7 @@ class ModuleRepository:
                     description = getattr(py_module, 'description', '')
                     role_visibility = getattr(py_module, 'role_visibility', [])
                     estimated_duration_minutes = getattr(py_module, 'estimated_duration_minutes', None)
+                    keywords = getattr(py_module, 'keywords', [])
                     
                     # Parse lessons with content_ru support
                     lessons = []
@@ -156,6 +158,12 @@ class ModuleRepository:
                     
                     module = AcademyModule(**module_data)
                     self.modules[module.id] = module
+                    
+                    # Store keywords in a separate dictionary for search
+                    if not hasattr(self, '_module_keywords'):
+                        self._module_keywords = {}
+                    self._module_keywords[module.id] = keywords
+                    
                     logger.info(f"Loaded Python module: {module.id} - {module.title}")
                     
             except Exception as e:
@@ -235,10 +243,10 @@ class ModuleRepository:
     
     def search(self, query: str) -> Dict[str, List]:
         """
-        Search modules and lessons by query string
+        Search modules and lessons by query string (enhanced global search)
         
         Args:
-            query: Search query (substring match in titles/content)
+            query: Search query (substring match in titles/content/tests/keywords)
         
         Returns:
             Dictionary with 'modules' and 'lessons' lists
@@ -250,11 +258,43 @@ class ModuleRepository:
         }
         
         for module in self.modules.values():
+            module_matched = False
+            
             # Search in module title and description
             if query_lower in module.title.lower() or query_lower in module.description.lower():
+                module_matched = True
+            
+            # Search in keywords if available
+            keywords = self._module_keywords.get(module.id, [])
+            if isinstance(keywords, list):
+                for keyword in keywords:
+                    if query_lower in str(keyword).lower():
+                        module_matched = True
+                        break
+            
+            # Search in tests
+            if not module_matched:
+                for test in module.tests:
+                    if query_lower in test.title.lower():
+                        module_matched = True
+                        break
+                    # Search in test questions
+                    for question in test.questions:
+                        if query_lower in question.question.lower():
+                            module_matched = True
+                            break
+                        # Search in answer options
+                        for option in question.options:
+                            if query_lower in option.lower():
+                                module_matched = True
+                                break
+                    if module_matched:
+                        break
+            
+            if module_matched:
                 results['modules'].append(module)
             
-            # Search in lessons
+            # Search in lessons (title and content)
             for lesson in module.lessons:
                 if query_lower in lesson.title.lower() or query_lower in lesson.content.lower():
                     results['lessons'].append({
@@ -268,4 +308,5 @@ class ModuleRepository:
     def reload(self):
         """Reload all modules from disk"""
         self.modules.clear()
+        self._module_keywords.clear()
         self._load_modules()

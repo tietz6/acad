@@ -160,15 +160,35 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
    • Фильтрация по вашей роли
    • Начало изучения уроков
 
+👤 /profile - Ваш личный кабинет
+   • Роль и ID пользователя
+   • Статистика обучения
+   • Модули в процессе
+
 📊 /progress - Просмотр вашего прогресса
    • Просмотр завершённых модулей
    • Отслеживание прохождения уроков
    • Просмотр результатов тестов
 
+📈 /progress_daily - Дневной прогресс
+   • Активность по дням
+   • Статистика изучения
+
+🏆 /badges - Ваши значки
+   • Просмотр заработанных значков
+   • Достижения в обучении
+
 🔍 /search <запрос> - Поиск контента
    • Поиск конкретных модулей
    • Поиск контента уроков
    • Быстрый доступ к темам
+
+🔐 /admin - Панель администратора (только для admin)
+   • Статистика по сотрудникам
+   • Управление модулями
+   • Просмотр результатов
+
+🔄 /reload - Перезагрузить модули (только для admin)
 
 ❓ /help - Показать это справочное сообщение
 
@@ -176,6 +196,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 • Не торопитесь с каждым уроком
 • Проходите уроки по порядку
 • Тесты помогают закрепить знания
+• Зарабатывайте значки за достижения
 • Вы можете в любое время вернуться к любому уроку
 
 Готовы учиться? Начните с /academy!
@@ -825,6 +846,371 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 
+async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show user profile"""
+    user_id = str(update.effective_user.id)
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{BACKEND_URL}/academy/v1/users/{user_id}/profile")
+            
+            if response.status_code != 200:
+                await update.message.reply_text("❌ Не удалось загрузить профиль.")
+                return
+            
+            profile = response.json()
+            
+            # Format role name
+            role_names = {
+                'sales_manager': 'Менеджер по продажам',
+                'generator': 'Генератор / Продакшн',
+                'admin': 'Руководитель / Админ',
+                'other': 'Другое',
+                'not_set': 'Не установлена'
+            }
+            role_display = role_names.get(profile.get('role', 'not_set'), profile.get('role', 'Не установлена'))
+            
+            message = f"👤 *Ваш профиль*\n\n"
+            message += f"🆔 ID: `{user_id}`\n"
+            message += f"👔 Роль: {role_display}\n"
+            message += f"📅 Дата присоединения: {profile.get('joined_date', 'Не указана')}\n\n"
+            
+            message += f"📊 *Статистика обучения:*\n"
+            message += f"📖 Завершено уроков: {profile['completed_lessons']}/{profile['total_lessons']}\n"
+            message += f"📚 Завершено модулей: {profile['completed_modules']}/{profile['total_modules']}\n"
+            message += f"📝 Пройдено тестов: {profile['passed_tests']}/{profile['total_tests']}\n"
+            message += f"📈 Процент выполнения: {profile['completion_percentage']}%\n"
+            message += f"⭐ Общий рейтинг: {profile['rating']}/100\n"
+            message += f"🏆 Заработано значков: {profile['badges_count']}\n\n"
+            
+            # Modules in progress
+            if profile.get('modules_in_progress'):
+                message += f"📚 *Модули в процессе:*\n"
+                for mod in profile['modules_in_progress'][:3]:  # Show max 3
+                    message += f"  • {mod['title']}\n"
+                message += "\n"
+            
+            message += "Продолжайте обучение! 🚀"
+            
+            await update.message.reply_text(message, parse_mode='Markdown')
+    
+    except Exception as e:
+        logger.error(f"Error in profile_command: {e}", exc_info=True)
+        await update.message.reply_text("❌ Произошла ошибка при загрузке профиля.")
+
+
+async def badges_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show user badges"""
+    user_id = str(update.effective_user.id)
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{BACKEND_URL}/academy/v1/users/{user_id}/badges")
+            
+            if response.status_code != 200:
+                await update.message.reply_text("❌ Не удалось загрузить значки.")
+                return
+            
+            data = response.json()
+            badges = data.get('badges', [])
+            
+            if not badges:
+                message = "🏆 *Ваши значки*\n\n"
+                message += "У вас пока нет заработанных значков.\n\n"
+                message += "Продолжайте обучение, чтобы заработать:\n"
+                message += "🎖 Первый модуль пройден\n"
+                message += "🧠 Один тест на 100%\n"
+                message += "🔥 3 дня подряд обучение\n"
+                message += "🚀 Закрыт весь F-блок\n"
+            else:
+                message = f"🏆 *Ваши значки* ({len(badges)})\n\n"
+                for badge in badges:
+                    badge_date = badge.get('earned_at', '')[:10] if badge.get('earned_at') else ''
+                    message += f"{badge['badge_name']}\n"
+                    if badge.get('badge_description'):
+                        message += f"  _{badge['badge_description']}_\n"
+                    if badge_date:
+                        message += f"  📅 {badge_date}\n"
+                    message += "\n"
+            
+            await update.message.reply_text(message, parse_mode='Markdown')
+    
+    except Exception as e:
+        logger.error(f"Error in badges_command: {e}", exc_info=True)
+        await update.message.reply_text("❌ Произошла ошибка при загрузке значков.")
+
+
+async def progress_daily_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show daily progress"""
+    user_id = str(update.effective_user.id)
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{BACKEND_URL}/academy/v1/users/{user_id}/daily-progress?days=14")
+            
+            if response.status_code != 200:
+                await update.message.reply_text("❌ Не удалось загрузить дневной прогресс.")
+                return
+            
+            data = response.json()
+            progress = data.get('progress', [])
+            
+            if not progress:
+                message = "📊 *Дневной прогресс*\n\n"
+                message += "Пока нет записей о вашей активности.\n"
+                message += "Начните обучение, чтобы отслеживать прогресс!"
+            else:
+                message = f"📊 *Дневной прогресс* (последние {len(progress)} дней)\n\n"
+                
+                total_lessons = 0
+                total_minutes = 0
+                total_tests = 0
+                
+                for day in progress[:10]:  # Show max 10 days
+                    date = day.get('date', '')
+                    lessons = day.get('lessons_completed', 0)
+                    minutes = day.get('minutes_studied', 0)
+                    tests = day.get('tests_passed', 0)
+                    
+                    total_lessons += lessons
+                    total_minutes += minutes
+                    total_tests += tests
+                    
+                    if lessons > 0 or minutes > 0 or tests > 0:
+                        message += f"📅 *{date}*\n"
+                        if lessons > 0:
+                            message += f"  📖 Уроков: {lessons}\n"
+                        if minutes > 0:
+                            message += f"  ⏱ Минут: {minutes}\n"
+                        if tests > 0:
+                            message += f"  📝 Тестов: {tests}\n"
+                        message += "\n"
+                
+                message += f"📈 *Итого за период:*\n"
+                message += f"📖 Уроков: {total_lessons}\n"
+                message += f"⏱ Минут: {total_minutes}\n"
+                message += f"📝 Тестов: {total_tests}\n"
+            
+            await update.message.reply_text(message, parse_mode='Markdown')
+    
+    except Exception as e:
+        logger.error(f"Error in progress_daily_command: {e}", exc_info=True)
+        await update.message.reply_text("❌ Произошла ошибка при загрузке дневного прогресса.")
+
+
+async def reload_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Reload modules (admin only)"""
+    user_id = str(update.effective_user.id)
+    
+    # Check if user is admin
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{BACKEND_URL}/academy/v1/users/{user_id}/role")
+            
+            if response.status_code != 200:
+                await update.message.reply_text("❌ Не удалось проверить права доступа.")
+                return
+            
+            role_data = response.json()
+            user_role = role_data.get('role')
+            
+            if user_role != 'admin':
+                await update.message.reply_text("❌ Эта команда доступна только администраторам.")
+                return
+            
+            # Get admin token from environment
+            admin_token = os.getenv("ADMIN_API_KEY", "")
+            
+            # Reload modules
+            headers = {}
+            if admin_token:
+                headers["X-Admin-Token"] = admin_token
+            
+            response = await client.post(
+                f"{BACKEND_URL}/academy/v1/admin/reload",
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                message = "✅ *Модули успешно перезагружены*\n\n"
+                message += f"Модулей до перезагрузки: {result.get('modules_before', 0)}\n"
+                message += f"Модулей после перезагрузки: {result.get('modules_after', 0)}\n"
+                await update.message.reply_text(message, parse_mode='Markdown')
+            else:
+                await update.message.reply_text(f"❌ Ошибка при перезагрузке модулей. Код: {response.status_code}")
+    
+    except Exception as e:
+        logger.error(f"Error in reload_command: {e}", exc_info=True)
+        await update.message.reply_text("❌ Произошла ошибка при перезагрузке модулей.")
+
+
+async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Admin dashboard"""
+    user_id = str(update.effective_user.id)
+    
+    # Check if user is admin
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{BACKEND_URL}/academy/v1/users/{user_id}/role")
+            
+            if response.status_code != 200:
+                await update.message.reply_text("❌ Не удалось проверить права доступа.")
+                return
+            
+            role_data = response.json()
+            user_role = role_data.get('role')
+            
+            if user_role != 'admin':
+                await update.message.reply_text("❌ Эта команда доступна только администраторам.")
+                return
+            
+            # Show admin menu
+            message = "🔐 *Панель администратора*\n\n"
+            message += "Выберите действие:"
+            
+            keyboard = [
+                [InlineKeyboardButton("📊 Статистика по сотрудникам", callback_data="admin:users_stats")],
+                [InlineKeyboardButton("📚 Статистика по модулям", callback_data="admin:modules_stats")],
+                [InlineKeyboardButton("📝 Результаты тестов", callback_data="admin:test_results")],
+                [InlineKeyboardButton("🔄 Перезагрузить модули", callback_data="admin:reload")],
+                [InlineKeyboardButton("👥 Список пользователей", callback_data="admin:users_list")],
+                [InlineKeyboardButton("❌ Закрыть", callback_data="close")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await update.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+    
+    except Exception as e:
+        logger.error(f"Error in admin_command: {e}", exc_info=True)
+        await update.message.reply_text("❌ Произошла ошибка при открытии панели администратора.")
+
+
+async def admin_callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle admin menu callbacks"""
+    query = update.callback_query
+    await query.answer()
+    
+    action = query.data.split(':')[1]
+    user_id = str(update.effective_user.id)
+    
+    # Get admin token
+    admin_token = os.getenv("ADMIN_API_KEY", "")
+    headers = {}
+    if admin_token:
+        headers["X-Admin-Token"] = admin_token
+    
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            if action == "users_stats":
+                response = await client.get(
+                    f"{BACKEND_URL}/academy/v1/admin/stats/summary",
+                    headers=headers
+                )
+                
+                if response.status_code == 200:
+                    stats = response.json()
+                    message = "📊 *Статистика по сотрудникам*\n\n"
+                    message += f"👥 Всего пользователей: {stats['total_users']}\n"
+                    message += f"📈 Активных пользователей: {stats['users_with_progress']}\n"
+                    message += f"📚 Всего модулей: {stats['total_modules']}\n"
+                    message += f"📖 Всего уроков: {stats['total_lessons_available']}\n"
+                    message += f"✅ Завершено уроков: {stats['total_lessons_completed']}\n"
+                    message += f"📊 Средний % завершения: {stats['average_completion_rate']}%\n\n"
+                    
+                    if stats.get('top_modules'):
+                        message += "*Топ модули:*\n"
+                        for mod in stats['top_modules'][:3]:
+                            message += f"  • {mod['title']}: {mod['completions']} завершений\n"
+                    
+                    await query.edit_message_text(message, parse_mode='Markdown')
+                else:
+                    await query.edit_message_text("❌ Не удалось загрузить статистику.")
+            
+            elif action == "modules_stats":
+                response = await client.get(
+                    f"{BACKEND_URL}/academy/v1/admin/modules/stats",
+                    headers=headers
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    module_stats = data.get('module_stats', [])
+                    
+                    message = f"📚 *Статистика по модулям* ({data['total_modules']} модулей)\n\n"
+                    
+                    for mod in module_stats[:5]:  # Show top 5
+                        message += f"*{mod['module_title']}*\n"
+                        message += f"  👥 Начали: {mod['users_started']}\n"
+                        message += f"  ✅ Завершили: {mod['users_completed']}\n"
+                        message += f"  📊 Средний %: {mod['average_completion_percentage']}%\n"
+                        
+                        if mod.get('top_users'):
+                            top_user = mod['top_users'][0] if len(mod['top_users']) > 0 else None
+                            if top_user:
+                                message += f"  🏆 Топ: {top_user['user_id']} ({top_user['completion']:.0f}%)\n"
+                        message += "\n"
+                    
+                    await query.edit_message_text(message, parse_mode='Markdown')
+                else:
+                    await query.edit_message_text("❌ Не удалось загрузить статистику по модулям.")
+            
+            elif action == "test_results":
+                await query.edit_message_text("📝 *Результаты тестов*\n\nФункция в разработке. Используйте /admin для других опций.", parse_mode='Markdown')
+            
+            elif action == "reload":
+                response = await client.post(
+                    f"{BACKEND_URL}/academy/v1/admin/reload",
+                    headers=headers
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    message = "✅ *Модули перезагружены*\n\n"
+                    message += f"До: {result.get('modules_before', 0)} модулей\n"
+                    message += f"После: {result.get('modules_after', 0)} модулей\n"
+                    await query.edit_message_text(message, parse_mode='Markdown')
+                else:
+                    await query.edit_message_text("❌ Ошибка при перезагрузке модулей.")
+            
+            elif action == "users_list":
+                response = await client.get(
+                    f"{BACKEND_URL}/academy/v1/admin/users",
+                    headers=headers
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    users = data.get('users', [])
+                    
+                    message = f"👥 *Список пользователей* ({data['total_users']})\n\n"
+                    
+                    for user in users[:10]:  # Show first 10
+                        role_names = {
+                            'sales_manager': 'Продажи',
+                            'generator': 'Генератор',
+                            'admin': 'Админ',
+                            'other': 'Другое'
+                        }
+                        role_display = role_names.get(user.get('role', 'other'), 'Другое')
+                        
+                        message += f"🆔 `{user['user_id']}`\n"
+                        message += f"  Роль: {role_display}\n"
+                        message += f"  📖 Уроков: {user.get('completed_lessons', 0)}\n"
+                        message += f"  📝 Тестов: {user.get('passed_tests', 0)}\n\n"
+                    
+                    if len(users) > 10:
+                        message += f"\n_...и ещё {len(users) - 10} пользователей_"
+                    
+                    await query.edit_message_text(message, parse_mode='Markdown')
+                else:
+                    await query.edit_message_text("❌ Не удалось загрузить список пользователей.")
+    
+    except Exception as e:
+        logger.error(f"Error in admin_callback_handler: {e}", exc_info=True)
+        await query.edit_message_text("❌ Произошла ошибка.")
+
+
 def main():
     """Main function to run the bot"""
     # Get bot token from environment variable
@@ -875,10 +1261,18 @@ def main():
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("progress", progress_command))
     application.add_handler(CommandHandler("search", search_command))
+    application.add_handler(CommandHandler("profile", profile_command))
+    application.add_handler(CommandHandler("badges", badges_command))
+    application.add_handler(CommandHandler("progress_daily", progress_daily_command))
+    application.add_handler(CommandHandler("reload", reload_command))
+    application.add_handler(CommandHandler("admin", admin_command))
     application.add_handler(conv_handler)
     
     # Role selection handler (separate from academy flow)
     application.add_handler(CallbackQueryHandler(role_selected, pattern='^role:'))
+    
+    # Admin menu handler
+    application.add_handler(CallbackQueryHandler(admin_callback_handler, pattern='^admin:'))
     
     # Start bot
     logger.info("🤖 SALESBOT Training Bot starting...")

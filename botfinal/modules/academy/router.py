@@ -16,6 +16,7 @@ from .repository import ModuleRepository
 from .progress_repository import ProgressRepository
 from .service import AcademyService
 from .tts_service import tts_service
+from .notification_service import notification_service
 
 logger = logging.getLogger(__name__)
 
@@ -249,11 +250,15 @@ async def generate_lesson_tts(
             detail=f"Lesson {lesson_id} not found in module {module_id}"
         )
     
-    # Generate TTS using the TTS service
+    # Generate TTS using the TTS service with caching
     try:
+        # Use lesson_id as cache key for consistent file naming
+        cache_key = f"{module_id}_{lesson_id}"
+        
         tts_result = await tts_service.generate_tts(
             text=lesson.content,
-            voice_type=tts_request.voice_type
+            voice_type=tts_request.voice_type,
+            cache_key=cache_key
         )
         
         return {
@@ -262,7 +267,8 @@ async def generate_lesson_tts(
             "module_id": module_id,
             "audio_url": f"{BACKEND_BASE_URL}{tts_result['audio_url']}",
             "voice_type": tts_request.voice_type,
-            "provider": tts_result.get("provider", "unknown")
+            "provider": tts_result.get("provider", "unknown"),
+            "cached": tts_result.get("cached", False)
         }
     
     except Exception as e:
@@ -523,6 +529,292 @@ async def get_admin_stats_summary(x_admin_token: Optional[str] = Header(None)):
         }
     except Exception as e:
         logger.error(f"Error getting admin stats: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Badge endpoints
+@router.get("/users/{user_id}/badges")
+async def get_user_badges(user_id: str):
+    """
+    Get all badges earned by a user
+    
+    Args:
+        user_id: User identifier
+    
+    Returns:
+        List of badges
+    """
+    try:
+        badges = progress_repo.get_user_badges(user_id)
+        return {
+            "user_id": user_id,
+            "total_badges": len(badges),
+            "badges": badges
+        }
+    except Exception as e:
+        logger.error(f"Error getting user badges: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Daily progress endpoints
+@router.get("/users/{user_id}/daily-progress")
+async def get_user_daily_progress(user_id: str, days: int = 30):
+    """
+    Get daily progress for a user
+    
+    Args:
+        user_id: User identifier
+        days: Number of days to retrieve (default: 30)
+    
+    Returns:
+        Daily progress records
+    """
+    try:
+        daily_progress = progress_repo.get_daily_progress(user_id, days)
+        return {
+            "user_id": user_id,
+            "days": days,
+            "progress": daily_progress
+        }
+    except Exception as e:
+        logger.error(f"Error getting daily progress: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# User profile endpoint
+@router.get("/users/{user_id}/profile")
+async def get_user_profile(user_id: str):
+    """
+    Get comprehensive user profile
+    
+    Args:
+        user_id: User identifier
+    
+    Returns:
+        User profile with role, progress, badges, and stats
+    """
+    try:
+        # Get role
+        role = progress_repo.get_user_role(user_id)
+        
+        # Get progress summary
+        summary = service.get_user_progress_summary(user_id)
+        
+        # Get badges
+        badges = progress_repo.get_user_badges(user_id)
+        
+        # Get user info from database
+        import sqlite3
+        conn = sqlite3.connect(str(progress_repo.db_path))
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT created_at FROM users WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+        conn.close()
+        
+        created_at = row['created_at'] if row else None
+        
+        # Calculate completion percentage
+        completion_percentage = 0
+        if summary.total_lessons > 0:
+            completion_percentage = int((summary.completed_lessons / summary.total_lessons) * 100)
+        
+        # Calculate rating (0-100 based on multiple factors)
+        rating = 0
+        if summary.total_lessons > 0:
+            lessons_weight = (summary.completed_lessons / summary.total_lessons) * 50
+            modules_weight = (summary.completed_modules / summary.total_modules) * 30 if summary.total_modules > 0 else 0
+            tests_weight = (summary.passed_tests / summary.total_tests) * 20 if summary.total_tests > 0 else 0
+            rating = int(lessons_weight + modules_weight + tests_weight)
+        
+        # Get modules in progress
+        in_progress_modules = []
+        progress_list = progress_repo.get_user_progress(user_id)
+        module_status = {}
+        for p in progress_list:
+            if p.module_id not in module_status:
+                module_status[p.module_id] = {'started': False, 'completed': False}
+            if p.status == 'in_progress':
+                module_status[p.module_id]['started'] = True
+            elif p.status == 'completed':
+                module_status[p.module_id]['completed'] = True
+        
+        for module_id, status in module_status.items():
+            if status['started'] and not status['completed']:
+                module = module_repo.get_module(module_id)
+                if module:
+                    in_progress_modules.append({
+                        'id': module.id,
+                        'title': module.title
+                    })
+        
+        return {
+            "user_id": user_id,
+            "role": role if role else "not_set",
+            "completed_lessons": summary.completed_lessons,
+            "total_lessons": summary.total_lessons,
+            "completion_percentage": completion_percentage,
+            "modules_in_progress": in_progress_modules,
+            "joined_date": created_at,
+            "rating": rating,
+            "badges_count": len(badges),
+            "completed_modules": summary.completed_modules,
+            "total_modules": summary.total_modules,
+            "passed_tests": summary.passed_tests,
+            "total_tests": summary.total_tests
+        }
+    except Exception as e:
+        logger.error(f"Error getting user profile: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Reload modules endpoint
+@router.post("/admin/reload")
+async def reload_modules(
+    x_admin_token: Optional[str] = Header(None),
+    notify_users: bool = False
+):
+    """
+    Reload all modules from disk (admin only)
+    
+    Requires X-Admin-Token header
+    
+    Args:
+        notify_users: If True, notify all users about new modules
+    
+    Returns:
+        Reload status with list of new modules
+    """
+    verify_admin_token(x_admin_token)
+    
+    try:
+        # Get module IDs before reload
+        old_modules = {m.id: m for m in module_repo.list_modules()}
+        old_count = len(old_modules)
+        
+        # Reload modules
+        module_repo.reload()
+        
+        # Get module IDs after reload
+        new_modules = {m.id: m for m in module_repo.list_modules()}
+        new_count = len(new_modules)
+        
+        # Detect new modules
+        new_module_ids = set(new_modules.keys()) - set(old_modules.keys())
+        new_modules_info = []
+        
+        for module_id in new_module_ids:
+            module = new_modules[module_id]
+            new_modules_info.append({
+                "id": module.id,
+                "title": module.title,
+                "description": module.description
+            })
+        
+        # Send notifications if requested and there are new modules
+        notifications_sent = False
+        if notify_users and new_modules_info:
+            try:
+                # Get all users
+                all_users = progress_repo.get_all_users()
+                user_ids = [user['user_id'] for user in all_users]
+                
+                # Send notification for each new module
+                for module_info in new_modules_info:
+                    await notification_service.notify_new_module(
+                        module_title=module_info['title'],
+                        module_description=module_info['description'],
+                        user_ids=user_ids
+                    )
+                
+                notifications_sent = True
+                logger.info(f"Sent notifications about {len(new_modules_info)} new modules to {len(user_ids)} users")
+            
+            except Exception as notif_error:
+                logger.error(f"Error sending notifications: {notif_error}", exc_info=True)
+        
+        return {
+            "success": True,
+            "message": "Modules reloaded successfully",
+            "modules_before": old_count,
+            "modules_after": new_count,
+            "new_modules": new_modules_info,
+            "notifications_sent": notifications_sent
+        }
+    except Exception as e:
+        logger.error(f"Error reloading modules: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Module statistics for admin
+@router.get("/admin/modules/stats")
+async def get_module_stats(x_admin_token: Optional[str] = Header(None)):
+    """
+    Get statistics for each module (admin only)
+    
+    Requires X-Admin-Token header
+    
+    Returns:
+        Module statistics with completion data
+    """
+    verify_admin_token(x_admin_token)
+    
+    try:
+        all_modules = module_repo.list_modules()
+        all_users = progress_repo.get_all_users()
+        
+        module_stats = []
+        
+        for module in all_modules:
+            users_started = 0
+            users_completed = 0
+            total_completion = 0
+            
+            user_scores = []  # For calculating top users
+            
+            for user in all_users:
+                user_progress = progress_repo.get_user_progress(user['user_id'], module.id)
+                
+                if user_progress:
+                    users_started += 1
+                    
+                    # Check if module is completed
+                    module_lesson_ids = {lesson.id for lesson in module.lessons}
+                    completed_lesson_ids = {p.lesson_id for p in user_progress if p.status == 'completed'}
+                    
+                    if module_lesson_ids and module_lesson_ids.issubset(completed_lesson_ids):
+                        users_completed += 1
+                    
+                    # Calculate completion percentage for this user
+                    if module_lesson_ids:
+                        user_completion = (len(completed_lesson_ids) / len(module_lesson_ids)) * 100
+                        total_completion += user_completion
+                        user_scores.append({
+                            'user_id': user['user_id'],
+                            'completion': user_completion
+                        })
+            
+            # Calculate average completion
+            avg_completion = (total_completion / users_started) if users_started > 0 else 0
+            
+            # Get top 3 users
+            top_users = sorted(user_scores, key=lambda x: x['completion'], reverse=True)[:3]
+            
+            module_stats.append({
+                "module_id": module.id,
+                "module_title": module.title,
+                "users_started": users_started,
+                "users_completed": users_completed,
+                "average_completion_percentage": round(avg_completion, 2),
+                "top_users": top_users
+            })
+        
+        return {
+            "total_modules": len(all_modules),
+            "module_stats": module_stats
+        }
+    except Exception as e:
+        logger.error(f"Error getting module stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

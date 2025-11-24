@@ -100,6 +100,14 @@ class AcademyService:
             return False
         
         self.progress_repo.mark_lesson_completed(user_id, module_id, lesson_id)
+        
+        # Update daily progress
+        minutes = lesson.duration_minutes if lesson.duration_minutes else 10  # Default 10 minutes if not specified
+        self.progress_repo.update_daily_progress(user_id, lessons_completed=1, minutes_studied=minutes)
+        
+        # Check and award badges
+        self.progress_repo.check_and_award_badges(user_id)
+        
         return True
     
     def start_lesson(self, user_id: str, module_id: str, lesson_id: str) -> bool:
@@ -216,6 +224,13 @@ class AcademyService:
             total_questions=len(test.questions),
             passed=passed
         )
+        
+        # Update daily progress if test passed
+        if passed:
+            self.progress_repo.update_daily_progress(user_id, tests_passed=1)
+        
+        # Check and award badges
+        self.progress_repo.check_and_award_badges(user_id)
         
         return TestResult(
             test_id=test_id,
