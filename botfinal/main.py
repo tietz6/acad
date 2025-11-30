@@ -102,6 +102,9 @@ def discover_and_load_modules():
                 logger.error(f"Failed to load module {module_path.name}: {e}", exc_info=True)
     
     # Загрузка модуля F3 из v1 пакета
+    # F3 router находится в отдельной структуре v1/ и требует явной регистрации.
+    # Контент модуля F3 автоматически загружается через repository.py (autodiscovery),
+    # но роутер регистрируется явно для предоставления дополнительных эндпоинтов.
     try:
         from modules.academy.v1.module_f3_router import router as module_f3_router
         app.include_router(module_f3_router)

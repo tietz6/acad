@@ -1,6 +1,10 @@
 """
 FastAPI Router для модуля F3 (Эмоциональная связь с клиентом)
 Предоставляет REST API для работы с модулем F3
+
+Примечание: Префикс роутера /academy/v1/modules/module_f3 создаёт отдельную
+точку доступа для модуля F3. Основной academy router также обеспечивает
+доступ к F3 через /academy/v1/modules/module_f3_emotion.
 """
 
 import logging
@@ -9,6 +13,8 @@ from fastapi import APIRouter, HTTPException, Body
 from pydantic import BaseModel
 
 from . import module_f3_service
+# Импортируем module_id для согласованности
+from ..module_f3_emotion import module_id as F3_MODULE_ID
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +71,7 @@ async def get_lesson(lesson_id: str):
         Данные урока: title, content_ru, order
     """
     try:
-        lesson = module_f3_service.get_lesson("module_f3_emotion", lesson_id)
+        lesson = module_f3_service.get_lesson(F3_MODULE_ID, lesson_id)
         
         if not lesson:
             raise HTTPException(
@@ -100,7 +106,7 @@ async def start_lesson(user_id: str, lesson_id: str):
     try:
         result = module_f3_service.start_lesson_for_user(
             user_id=user_id,
-            module_id_param="module_f3_emotion",
+            module_id_param=F3_MODULE_ID,
             lesson_id=lesson_id
         )
         return result
@@ -134,7 +140,7 @@ async def submit_test(
     try:
         result = module_f3_service.submit_test(
             user_id=submission.user_id,
-            module_id_param="module_f3_emotion",
+            module_id_param=F3_MODULE_ID,
             test_id=test_id,
             answers=submission.answers
         )
