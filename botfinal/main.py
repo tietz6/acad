@@ -101,6 +101,15 @@ def discover_and_load_modules():
             except Exception as e:
                 logger.error(f"Failed to load module {module_path.name}: {e}", exc_info=True)
     
+    # Загрузка модуля F3 из v1 пакета
+    try:
+        from modules.academy.v1.module_f3_router import router as module_f3_router
+        app.include_router(module_f3_router)
+        loaded_module_routers.append("module_f3_emotion")
+        logger.info("✓ Loaded router from module: module_f3_emotion")
+    except Exception as e:
+        logger.exception("Failed to load module_f3 router: %s", e)
+    
     logger.info(f"Discovered module commands: {loaded_module_commands}")
     logger.info(f"Loaded {len(loaded_module_routers)} module routers")
 
