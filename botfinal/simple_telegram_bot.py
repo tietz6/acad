@@ -58,24 +58,58 @@ def split_long_message(text: str, max_length: int = MAX_MESSAGE_LENGTH) -> List[
     return chunks
 
 
+# ========================================
+# AUTHENTICATION HELPER FUNCTIONS
+# ========================================
+
+def is_authenticated(context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """Check if user is authenticated"""
+    return bool(context.user_data.get("is_authenticated"))
+
+
+def get_user_role(context: ContextTypes.DEFAULT_TYPE) -> Optional[str]:
+    """Get the user's role from context"""
+    return context.user_data.get("role")
+
+
+async def ensure_authenticated(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """
+    Ensure user is authenticated before allowing access to training features.
+    Returns True if authenticated, False otherwise.
+    If not authenticated, shows a message prompting the user to login.
+    """
+    if is_authenticated(context):
+        return True
+    
+    # User is not authenticated, show login prompt
+    text = (
+        "🔐 Доступ к обучению только по паролю.\n"
+        "Пожалуйста, введите команду /login и авторизуйтесь."
+    )
+    
+    # Handle both message and callback_query
+    if update.message:
+        await update.message.reply_text(text)
+    elif update.callback_query:
+        await update.callback_query.answer()
+        await update.callback_query.message.reply_text(text)
+    
+    return False
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start command handler - now with password-based login"""
     user = update.effective_user
-    user_id = str(user.id)
     
-    # Check if user already has a role
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(f"{BACKEND_URL}/academy/v1/users/{user_id}/role")
-            
-            if response.status_code == 200:
-                role_data = response.json()
-                user_role = role_data.get('role')
-                
-                if user_role and user_role != 'not_set':
-                    # User already has a role, show welcome message
-                    welcome_message = f"""
+    # Check if user is authenticated
+    if is_authenticated(context):
+        role = get_user_role(context)
+        role_display = "АДМИН" if role == "admin" else "ПОЛЬЗОВАТЕЛЬ"
+        
+        welcome_message = f"""
 👋 Добро пожаловать в Академию обучения На Счастье, {user.first_name}!
+
+Вы вошли как: *{role_display}*
 
 Я ваш обучающий ассистент. Вот что я могу для вас сделать:
 
@@ -86,141 +120,135 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 Давайте начнём ваше обучение! Наберите /academy чтобы увидеть доступные модули.
 """
-                    await update.message.reply_text(welcome_message)
-                    return
-    except Exception as e:
-        logger.error(f"Error checking user role: {e}")
-    
-    # User doesn't have a role, ask them to login
-    welcome_message = f"""
-👋 Добро пожаловать в Академию обучения На Счастье, {user.first_name}!
+        await update.message.reply_text(welcome_message, parse_mode='Markdown')
+    else:
+        # User is not authenticated
+        welcome_message = f"""
+👋 Добро пожаловать в Академию обучения На Счастье!
 
-Для начала работы, пожалуйста, войдите в систему.
+Для доступа к модулям сначала нужно ввести пароль.
 
-Используйте команду /login и введите пароль доступа.
-
-Ваша роль (администратор или пользователь) будет определена на основе введённого пароля.
+1️⃣ Наберите команду /login  
+2️⃣ Введите пароль (админ или пользователь)  
+3️⃣ После этого станут доступны команды /academy и другие
 """
-    
-    await update.message.reply_text(welcome_message)
+        await update.message.reply_text(welcome_message)
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Help command handler"""
-    help_text = """
+    role = get_user_role(context)
+    
+    if not is_authenticated(context):
+        # Not authenticated - show only basic commands
+        help_text = """
 🤖 *Академия обучения На Счастье*
 
-Доступные команды:
+Для доступа к обучению необходимо войти в систему.
+
+*Доступные команды:*
+
+🏠 /start - Начало работы
+❓ /help - Показать это справочное сообщение
+🔐 /login - Вход в систему
+
+После входа вам станут доступны все обучающие модули и функции!
+"""
+    elif role == "admin":
+        # Admin - show all commands
+        help_text = """
+🤖 *Академия обучения На Счастье*
+
+Вы вошли как: *АДМИН*
+
+*Обучающие команды:*
 
 📚 /academy - Просмотр обучающих модулей
-   • Просмотр всех доступных модулей
-   • Фильтрация по вашей роли
-   • Начало изучения уроков
-
 👤 /profile - Ваш личный кабинет
-   • Роль и ID пользователя
-   • Статистика обучения
-   • Модули в процессе
-
 📊 /progress - Просмотр вашего прогресса
-   • Просмотр завершённых модулей
-   • Отслеживание прохождения уроков
-   • Просмотр результатов тестов
-
 📈 /progress_daily - Дневной прогресс
-   • Активность по дням
-   • Статистика изучения
-
 🏆 /badges - Ваши значки
-   • Просмотр заработанных значков
-   • Достижения в обучении
-
 🔍 /search <запрос> - Поиск контента
-   • Поиск конкретных модулей
-   • Поиск контента уроков
-   • Быстрый доступ к темам
 
-🔐 /login - Вход в систему
-   • Вход по паролю доступа
-   • Автоматическое определение роли (admin/user)
-
-🔐 /admin - Панель администратора (только для admin)
-   • Статистика по сотрудникам
-   • Управление модулями
-   • Просмотр результатов
-
-🔄 /reload - Перезагрузить модули (только для admin)
-
-*🆕 V3 - Новые функции:*
+*V3 Функции:*
 
 ⭐ /level - Ваш уровень и опыт
-   • Просмотр текущего уровня
-   • XP и ранг
-   • Прогресс до следующего уровня
-
 📋 /plan - Персональный план обучения
-   • Рекомендуемые уроки
-   • Адаптивный план на 7 дней
-
 🔄 /plan_refresh - Обновить план обучения
-   • Пересоздать план
-
 🎯 /quests - Ежедневные задания
-   • Активные квесты
-   • Награды XP
-
 🎙️ /tts_settings - Настройки озвучки
-   • Выбор голоса
-   • Скорость воспроизведения
+
+*Админ-команды:*
+
+🔐 /admin - Панель администратора
+🔄 /reload - Перезагрузить модули
+📊 /mega_stats - Мегастатистика (V3)
+
+*Система:*
 
 ❓ /help - Показать это справочное сообщение
+🚪 /logout - Выйти из системы
+
+💡 *Совет:* Используйте /admin для доступа к статистике и управлению
+"""
+    else:
+        # Regular user - show user commands only
+        help_text = """
+🤖 *Академия обучения На Счастье*
+
+Вы вошли как: *ПОЛЬЗОВАТЕЛЬ*
+
+*Обучающие команды:*
+
+📚 /academy - Просмотр обучающих модулей
+👤 /profile - Ваш личный кабинет
+📊 /progress - Просмотр вашего прогресса
+📈 /progress_daily - Дневной прогресс
+🏆 /badges - Ваши значки
+🔍 /search <запрос> - Поиск контента
+
+*V3 Функции:*
+
+⭐ /level - Ваш уровень и опыт
+📋 /plan - Персональный план обучения
+🔄 /plan_refresh - Обновить план обучения
+🎯 /quests - Ежедневные задания
+🎙️ /tts_settings - Настройки озвучки
+
+*Система:*
+
+❓ /help - Показать это справочное сообщение
+🚪 /logout - Выйти из системы
 
 💡 *Советы:*
 • Не торопитесь с каждым уроком
 • Проходите уроки по порядку
 • Тесты помогают закрепить знания
 • Зарабатывайте значки за достижения
-• Вы можете в любое время вернуться к любому уроку
-
-Готовы учиться? Начните с /academy!
 """
+    
     await update.message.reply_text(help_text, parse_mode='Markdown')
 
 
 async def login_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Login command - authenticate with password"""
-    user = update.effective_user
-    user_id = str(user.id)
-    
-    # Check if user already has a role
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(f"{BACKEND_URL}/academy/v1/users/{user_id}/role")
-            
-            if response.status_code == 200:
-                role_data = response.json()
-                user_role = role_data.get('role')
-                
-                if user_role and user_role != 'not_set':
-                    # User already has a role
-                    role_display = "АДМИН" if user_role == "admin" else "ПОЛЬЗОВАТЕЛЬ"
-                    message = f"""
+    # Check if user is already authenticated
+    if is_authenticated(context):
+        role = get_user_role(context)
+        role_display = "АДМИН" if role == "admin" else "ПОЛЬЗОВАТЕЛЬ"
+        message = f"""
 ✅ Вы уже вошли как *{role_display}*.
 
-Если хотите сменить роль, введите новый пароль доступа ниже.
+Если хотите войти с другим паролем, введите новый пароль доступа ниже.
 """
-                    await update.message.reply_text(message, parse_mode='Markdown')
-                    return AWAITING_PASSWORD
-    except Exception as e:
-        logger.error(f"Error checking user role in login: {e}")
+        await update.message.reply_text(message, parse_mode='Markdown')
+        return AWAITING_PASSWORD
     
-    # User doesn't have a role or wants to change it
+    # User is not authenticated
     message = """
 🔐 *Вход в систему*
 
-Пожалуйста, введите пароль доступа.
-
-Ваша роль будет определена на основе введённого пароля.
+Введите пароль, который вы получили от руководителя:
 """
     await update.message.reply_text(message, parse_mode='Markdown')
     return AWAITING_PASSWORD
@@ -230,8 +258,11 @@ async def handle_password(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle password input for login"""
     user = update.effective_user
     user_id = str(user.id)
-    username = user.username
+    username = user.username or ""
     password = update.message.text.strip()
+    
+    # Log login attempt without password
+    logger.info(f"Login attempt for user_id={user_id}, username={username}")
     
     try:
         async with httpx.AsyncClient() as client:
@@ -248,33 +279,34 @@ async def handle_password(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 login_data = response.json()
                 role = login_data.get('role')
                 
-                # Store role in context
+                # Store authentication in context
                 context.user_data['role'] = role
+                context.user_data['is_authenticated'] = True
+                
+                logger.info(f"Successful login for user_id={user_id} as role={role}")
                 
                 # Show success message based on role
                 if role == "admin":
                     message = """
-✅ *Вы вошли как АДМИН*
+✅ Вы успешно вошли как *АДМИН*.
+Теперь вам доступны админ-команды и обучение.
 
-Вам доступны:
-• Все обучающие модули
-• Команды управления (/admin, /reload)
-• Статистика и аналитика
-• Мегастатистика (V3)
-
-Начните с команды /academy или /admin
+*Доступные команды:*
+• /academy - Обучающие модули
+• /admin - Панель администратора
+• /reload - Перезагрузить модули
+• /help - Все команды
 """
                 else:  # role == "user"
                     message = """
-✅ *Вы вошли как ПОЛЬЗОВАТЕЛЬ*
+✅ Вы успешно вошли как *ПОЛЬЗОВАТЕЛЬ*.
+Теперь вы можете пользоваться Академией обучения.
 
-Вам доступно:
-• Все обучающие модули
-• Система уровней и опыта
-• Персональные планы обучения
-• Ежедневные квесты
-
-Начните с команды /academy
+*Доступные команды:*
+• /academy - Обучающие модули
+• /progress - Ваш прогресс
+• /profile - Ваш профиль
+• /help - Все команды
 """
                 
                 await update.message.reply_text(message, parse_mode='Markdown')
@@ -282,25 +314,21 @@ async def handle_password(update: Update, context: ContextTypes.DEFAULT_TYPE):
             
             elif response.status_code == 401:
                 # Invalid password
-                message = """
-❌ *Неверный пароль*
-
-Пожалуйста, проверьте пароль и попробуйте ещё раз.
-
-Введите пароль доступа или используйте /cancel для отмены.
-"""
-                await update.message.reply_text(message, parse_mode='Markdown')
+                logger.warning(f"Failed login attempt for user_id={user_id}: Invalid password")
+                message = "❌ Неверный пароль доступа. Попробуйте ещё раз или уточните пароль у руководителя."
+                await update.message.reply_text(message)
                 return AWAITING_PASSWORD
             
             else:
                 # Other error
+                logger.error(f"Login error for user_id={user_id}: HTTP {response.status_code}")
                 await update.message.reply_text(
                     "❌ Произошла ошибка при входе. Попробуйте позже или используйте /cancel."
                 )
                 return AWAITING_PASSWORD
     
     except Exception as e:
-        logger.error(f"Error in handle_password: {e}", exc_info=True)
+        logger.error(f"Error in handle_password for user_id={user_id}: {e}", exc_info=True)
         await update.message.reply_text(
             "❌ Произошла ошибка при входе. Попробуйте позже или используйте /cancel."
         )
@@ -315,8 +343,33 @@ async def cancel_login(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 
+async def logout_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Logout command - clear authentication"""
+    # Clear authentication data
+    context.user_data.clear()
+    
+    message = "Вы вышли из аккаунта. Чтобы снова пользоваться Академией, введите /login."
+    await update.message.reply_text(message)
+
+
+async def whoami_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show current authentication status"""
+    if is_authenticated(context):
+        role = get_user_role(context)
+        role_display = "АДМИН" if role == "admin" else "ПОЛЬЗОВАТЕЛЬ"
+        message = f"Вы вошли как: *{role_display}*"
+        await update.message.reply_text(message, parse_mode='Markdown')
+    else:
+        message = "Сейчас вы не авторизованы. Наберите /login."
+        await update.message.reply_text(message)
+
+
 async def academy_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show academy modules menu"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return ConversationHandler.END
+    
     user_id = str(update.effective_user.id)
     
     try:
@@ -366,6 +419,10 @@ async def academy_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def module_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle module selection"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return ConversationHandler.END
+    
     query = update.callback_query
     await query.answer()
     
@@ -434,6 +491,10 @@ async def module_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def lesson_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle lesson selection"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return VIEWING_LESSON
+    
     query = update.callback_query
     await query.answer()
     
@@ -505,6 +566,10 @@ async def lesson_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def lesson_navigation(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle lesson navigation (next/previous)"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return VIEWING_LESSON
+    
     query = update.callback_query
     await query.answer()
     
@@ -552,6 +617,10 @@ async def lesson_navigation(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def show_tts_voice_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show voice selection menu for TTS"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return VIEWING_LESSON
+    
     query = update.callback_query
     await query.answer()
     
@@ -580,6 +649,10 @@ async def show_tts_voice_menu(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 async def complete_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Mark lesson as completed"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return VIEWING_LESSON
+    
     query = update.callback_query
     await query.answer("✅ Урок отмечен как пройденный!")
     
@@ -610,6 +683,10 @@ async def complete_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def request_tts(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Request TTS for lesson"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return VIEWING_LESSON
+    
     query = update.callback_query
     await query.answer("🔊 Генерирую аудио... Пожалуйста, подождите.")
     
@@ -667,6 +744,10 @@ async def request_tts(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def test_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle test selection"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return VIEWING_LESSON
+    
     query = update.callback_query
     await query.answer()
     
@@ -750,6 +831,10 @@ async def show_test_question(query, context: ContextTypes.DEFAULT_TYPE):
 
 async def test_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle test answer selection"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return TAKING_TEST
+    
     query = update.callback_query
     await query.answer()
     
@@ -810,6 +895,10 @@ async def submit_test_answers(query, context: ContextTypes.DEFAULT_TYPE):
 
 async def progress_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show user progress"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return
+    
     user_id = str(update.effective_user.id)
     
     try:
@@ -845,6 +934,10 @@ async def progress_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Search for content"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return
+    
     if not context.args:
         await update.message.reply_text("Использование: /search <запрос>\n\nПример: /search воронка продаж")
         return
@@ -895,6 +988,10 @@ async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def back_to_modules(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Return to modules list"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return ConversationHandler.END
+    
     query = update.callback_query
     await query.answer()
     
@@ -959,6 +1056,10 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show user profile"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return
+    
     user_id = str(update.effective_user.id)
     
     try:
@@ -1012,6 +1113,10 @@ async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def badges_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show user badges"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return
+    
     user_id = str(update.effective_user.id)
     
     try:
@@ -1053,6 +1158,10 @@ async def badges_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def progress_daily_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show daily progress"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return
+    
     user_id = str(update.effective_user.id)
     
     try:
@@ -1382,6 +1491,10 @@ async def admin_callback_handler(update: Update, context: ContextTypes.DEFAULT_T
 
 async def level_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Показать уровень и опыт пользователя (V3)"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return
+    
     user_id = str(update.effective_user.id)
     
     try:
@@ -1419,6 +1532,10 @@ async def level_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def plan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Показать персональный план обучения (V3)"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return
+    
     user_id = str(update.effective_user.id)
     
     try:
@@ -1474,6 +1591,10 @@ async def plan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def plan_refresh_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Сгенерировать новый персональный план обучения (V3)"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return
+    
     user_id = str(update.effective_user.id)
     
     await update.message.reply_text("🔄 Генерирую персональный план обучения...\nЭто может занять несколько секунд.")
@@ -1507,6 +1628,10 @@ async def plan_refresh_command(update: Update, context: ContextTypes.DEFAULT_TYP
 
 async def quests_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Показать ежедневные квесты (V3)"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return
+    
     user_id = str(update.effective_user.id)
     
     try:
@@ -1556,6 +1681,10 @@ async def quests_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def tts_settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Показать и настроить параметры TTS (V3)"""
+    # Check authentication
+    if not await ensure_authenticated(update, context):
+        return
+    
     user_id = str(update.effective_user.id)
     
     try:
@@ -1652,6 +1781,8 @@ def main():
     application.add_handler(login_conv_handler)
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("logout", logout_command))
+    application.add_handler(CommandHandler("whoami", whoami_command))
     application.add_handler(CommandHandler("progress", progress_command))
     application.add_handler(CommandHandler("search", search_command))
     application.add_handler(CommandHandler("profile", profile_command))
