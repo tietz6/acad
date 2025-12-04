@@ -1220,23 +1220,20 @@ async def progress_daily_command(update: Update, context: ContextTypes.DEFAULT_T
 
 async def reload_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Reload modules (admin only)"""
-    user_id = str(update.effective_user.id)
+    # Check authentication first
+    if not await ensure_authenticated(update, context):
+        return
     
     # Check if user is admin
+    user_role = get_user_role(context)
+    if user_role != 'admin':
+        await update.message.reply_text("❌ Эта команда доступна только администраторам.")
+        return
+    
+    user_id = str(update.effective_user.id)
+    
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(f"{BACKEND_URL}/academy/v1/users/{user_id}/role")
-            
-            if response.status_code != 200:
-                await update.message.reply_text("❌ Не удалось проверить права доступа.")
-                return
-            
-            role_data = response.json()
-            user_role = role_data.get('role')
-            
-            if user_role != 'admin':
-                await update.message.reply_text("❌ Эта команда доступна только администраторам.")
-                return
             
             # Get admin token from environment
             admin_token = os.getenv("ADMIN_API_KEY", "")
@@ -1267,23 +1264,20 @@ async def reload_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Admin dashboard"""
-    user_id = str(update.effective_user.id)
+    # Check authentication first
+    if not await ensure_authenticated(update, context):
+        return
     
     # Check if user is admin
+    user_role = get_user_role(context)
+    if user_role != 'admin':
+        await update.message.reply_text("❌ Эта команда доступна только администраторам.")
+        return
+    
+    user_id = str(update.effective_user.id)
+    
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(f"{BACKEND_URL}/academy/v1/users/{user_id}/role")
-            
-            if response.status_code != 200:
-                await update.message.reply_text("❌ Не удалось проверить права доступа.")
-                return
-            
-            role_data = response.json()
-            user_role = role_data.get('role')
-            
-            if user_role != 'admin':
-                await update.message.reply_text("❌ Эта команда доступна только администраторам.")
-                return
             
             # Show admin menu
             message = "🔐 *Панель администратора*\n\n"
@@ -1309,6 +1303,17 @@ async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def admin_callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle admin menu callbacks"""
+    # Check authentication first
+    if not await ensure_authenticated(update, context):
+        return
+    
+    # Check if user is admin
+    user_role = get_user_role(context)
+    if user_role != 'admin':
+        query = update.callback_query
+        await query.answer("❌ Эта функция доступна только администраторам.")
+        return
+    
     query = update.callback_query
     await query.answer()
     
