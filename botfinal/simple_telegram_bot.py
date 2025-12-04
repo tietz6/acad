@@ -105,45 +105,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(welcome_message)
 
 
-async def role_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle role selection"""
-    query = update.callback_query
-    await query.answer()
-    
-    role = query.data.split(':')[1]
-    user_id = str(update.effective_user.id)
-    
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{BACKEND_URL}/academy/v1/users/{user_id}/role",
-                json={"role": role}
-            )
-            
-            if response.status_code == 200:
-                role_names = {
-                    'sales_manager': 'Менеджер по продажам',
-                    'generator': 'Генератор / Продакшн',
-                    'admin': 'Руководитель / Админ',
-                    'other': 'Другое'
-                }
-                
-                message = f"""
-✅ Роль сохранена: *{role_names.get(role, role)}*
-
-Теперь вам будут показываться нужные обучающие модули.
-
-Наберите /academy, чтобы начать обучение!
-"""
-                await query.edit_message_text(message, parse_mode='Markdown')
-            else:
-                await query.edit_message_text("❌ Ошибка при сохранении роли. Попробуйте снова.")
-    
-    except Exception as e:
-        logger.error(f"Error setting role: {e}", exc_info=True)
-        await query.edit_message_text("❌ Произошла ошибка. Попробуйте позже.")
-
-
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Help command handler"""
     help_text = """
@@ -1707,9 +1668,6 @@ def main():
     application.add_handler(CommandHandler("tts_settings", tts_settings_command))
     
     application.add_handler(conv_handler)
-    
-    # Role selection handler (separate from academy flow)
-    application.add_handler(CallbackQueryHandler(role_selected, pattern='^role:'))
     
     # Admin menu handler
     application.add_handler(CallbackQueryHandler(admin_callback_handler, pattern='^admin:'))
