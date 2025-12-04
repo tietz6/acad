@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8080")
 
 # Conversation states
-SELECTING_ROLE, SELECTING_MODULE, VIEWING_LESSON, TAKING_TEST, SELECTING_VOICE = range(5)
+SELECTING_ROLE, SELECTING_MODULE, VIEWING_LESSON, TAKING_TEST, SELECTING_VOICE, AWAITING_PASSWORD = range(6)
 
 # Maximum message length for Telegram
 MAX_MESSAGE_LENGTH = 4000
@@ -59,7 +59,7 @@ def split_long_message(text: str, max_length: int = MAX_MESSAGE_LENGTH) -> List[
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Start command handler - with role selection"""
+    """Start command handler - now with password-based login"""
     user = update.effective_user
     user_id = str(user.id)
     
@@ -91,22 +91,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Error checking user role: {e}")
     
-    # User doesn't have a role, ask for it
+    # User doesn't have a role, ask them to login
     welcome_message = f"""
 👋 Добро пожаловать в Академию обучения На Счастье, {user.first_name}!
 
-Для начала, пожалуйста, выберите вашу роль в компании:
+Для начала работы, пожалуйста, войдите в систему.
+
+Используйте команду /login и введите пароль доступа.
+
+Ваша роль (администратор или пользователь) будет определена на основе введённого пароля.
 """
     
-    keyboard = [
-        [InlineKeyboardButton("👔 Менеджер по продажам", callback_data="role:sales_manager")],
-        [InlineKeyboardButton("🎨 Генератор / Продакшн", callback_data="role:generator")],
-        [InlineKeyboardButton("⭐ Руководитель / Админ", callback_data="role:admin")],
-        [InlineKeyboardButton("👤 Другое", callback_data="role:other")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+    await update.message.reply_text(welcome_message)
 
 
 async def role_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -183,6 +179,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
    • Поиск контента уроков
    • Быстрый доступ к темам
 
+🔐 /login - Вход в систему
+   • Вход по паролю доступа
+   • Автоматическое определение роли (admin/user)
+
 🔐 /admin - Панель администратора (только для admin)
    • Статистика по сотрудникам
    • Управление модулями
@@ -224,6 +224,134 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 Готовы учиться? Начните с /academy!
 """
     await update.message.reply_text(help_text, parse_mode='Markdown')
+
+
+async def login_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Login command - authenticate with password"""
+    user = update.effective_user
+    user_id = str(user.id)
+    
+    # Check if user already has a role
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{BACKEND_URL}/academy/v1/users/{user_id}/role")
+            
+            if response.status_code == 200:
+                role_data = response.json()
+                user_role = role_data.get('role')
+                
+                if user_role and user_role != 'not_set':
+                    # User already has a role
+                    role_display = "АДМИН" if user_role == "admin" else "ПОЛЬЗОВАТЕЛЬ"
+                    message = f"""
+✅ Вы уже вошли как *{role_display}*.
+
+Если хотите сменить роль, введите новый пароль доступа ниже.
+"""
+                    await update.message.reply_text(message, parse_mode='Markdown')
+                    return AWAITING_PASSWORD
+    except Exception as e:
+        logger.error(f"Error checking user role in login: {e}")
+    
+    # User doesn't have a role or wants to change it
+    message = """
+🔐 *Вход в систему*
+
+Пожалуйста, введите пароль доступа.
+
+Ваша роль будет определена на основе введённого пароля.
+"""
+    await update.message.reply_text(message, parse_mode='Markdown')
+    return AWAITING_PASSWORD
+
+
+async def handle_password(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle password input for login"""
+    user = update.effective_user
+    user_id = str(user.id)
+    username = user.username
+    password = update.message.text.strip()
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{BACKEND_URL}/academy/v1/auth/login",
+                json={
+                    "telegram_id": user_id,
+                    "telegram_username": username,
+                    "password": password
+                }
+            )
+            
+            if response.status_code == 200:
+                login_data = response.json()
+                role = login_data.get('role')
+                
+                # Store role in context
+                context.user_data['role'] = role
+                
+                # Show success message based on role
+                if role == "admin":
+                    message = """
+✅ *Вы вошли как АДМИН*
+
+Вам доступны:
+• Все обучающие модули
+• Команды управления (/admin, /reload)
+• Статистика и аналитика
+• Мегастатистика (V3)
+
+Начните с команды /academy или /admin
+"""
+                else:  # role == "user"
+                    message = """
+✅ *Вы вошли как ПОЛЬЗОВАТЕЛЬ*
+
+Вам доступно:
+• Все обучающие модули
+• Система уровней и опыта
+• Персональные планы обучения
+• Ежедневные квесты
+
+Начните с команды /academy
+"""
+                
+                await update.message.reply_text(message, parse_mode='Markdown')
+                return ConversationHandler.END
+            
+            elif response.status_code == 401:
+                # Invalid password
+                message = """
+❌ *Неверный пароль*
+
+Пожалуйста, проверьте пароль и попробуйте ещё раз.
+
+Введите пароль доступа или используйте /cancel для отмены.
+"""
+                await update.message.reply_text(message, parse_mode='Markdown')
+                return AWAITING_PASSWORD
+            
+            else:
+                # Other error
+                await update.message.reply_text(
+                    "❌ Произошла ошибка при входе. Попробуйте позже или используйте /cancel."
+                )
+                return AWAITING_PASSWORD
+    
+    except Exception as e:
+        logger.error(f"Error in handle_password: {e}", exc_info=True)
+        await update.message.reply_text(
+            "❌ Произошла ошибка при входе. Попробуйте позже или используйте /cancel."
+        )
+        return AWAITING_PASSWORD
+
+
+async def cancel_login(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Cancel login process"""
+    await update.message.reply_text(
+        "❌ Вход отменён.\n\nИспользуйте /login когда захотите войти в систему."
+    )
+    return ConversationHandler.END
 
 
 async def academy_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1515,6 +1643,19 @@ def main():
     # Create application
     application = Application.builder().token(token).build()
     
+    # Login conversation handler
+    login_conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('login', login_command)],
+        states={
+            AWAITING_PASSWORD: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_password),
+            ],
+        },
+        fallbacks=[
+            CommandHandler('cancel', cancel_login),
+        ],
+    )
+    
     # Conversation handler for academy flow
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('academy', academy_command)],
@@ -1547,6 +1688,7 @@ def main():
     )
     
     # Add handlers
+    application.add_handler(login_conv_handler)
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("progress", progress_command))
