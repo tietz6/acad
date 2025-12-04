@@ -71,6 +71,8 @@ cp .env.example .env
 ```env
 TELEGRAM_BOT_TOKEN=your_token_here
 ADMIN_API_KEY=your_secure_key_here
+ADMIN_PASSWORD=your-secure-admin-password
+USER_PASSWORD=your-secure-user-password
 ```
 
 ### 3. Запустите систему:
@@ -91,7 +93,7 @@ python simple_telegram_bot.py
 module_id = "module_new"
 title = "Новый модуль"
 description = "Описание модуля"
-role_visibility = ["sales_manager", "admin"]
+role_visibility = ["admin"]  # Только админы или оставить пустым для всех
 keywords = ["новый", "обучение", "модуль"]  # Для поиска!
 
 lessons = [

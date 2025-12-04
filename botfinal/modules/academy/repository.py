@@ -101,6 +101,9 @@ class ModuleRepository:
         # Find all module*.py files (includes module4.py, module_p1.py, etc.)
         module_files = list(self.modules_dir.glob("module*.py"))
         
+        # Exclude module7_tech.py from loading (F7 module removed from system)
+        module_files = [f for f in module_files if f.stem != "module7_tech"]
+        
         for module_file in module_files:
             try:
                 # Dynamically import the module
@@ -174,7 +177,7 @@ class ModuleRepository:
         List all modules, optionally filtered by role
         
         Args:
-            role: Filter modules by role (e.g., "sales_manager", "generator")
+            role: Filter modules by role (only "admin" or "user")
         
         Returns:
             List of modules
@@ -182,8 +185,15 @@ class ModuleRepository:
         modules = list(self.modules.values())
         
         if role:
-            # Filter: include if role matches, or if module has "all" in roles, or if roles is empty
-            modules = [m for m in modules if role in m.roles or "all" in m.roles or len(m.roles) == 0]
+            # Simplified role system: admin sees all, user sees all non-admin-only modules
+            # Modules with old roles (sales_manager, generator, etc.) are treated as visible to all users
+            if role == "admin":
+                # Admin sees everything
+                pass
+            else:
+                # User (non-admin) sees all modules except admin-only ones
+                # Filter out modules that have only "admin" in their roles list
+                modules = [m for m in modules if "admin" not in m.roles or len(m.roles) == 0 or len(m.roles) > 1 or "all" in m.roles]
         
         return sorted(modules, key=lambda m: (m.level, m.title))
     

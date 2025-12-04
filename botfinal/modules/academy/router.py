@@ -408,6 +408,77 @@ async def get_next_lesson(module_id: str, user_id: str):
     }
 
 
+# Authentication endpoint
+@router.post("/auth/login")
+async def login_user(login_data: dict = Body(...)):
+    """
+    Authenticate user with password and assign role
+    
+    Request JSON:
+        telegram_id: str - Telegram user ID
+        telegram_username: Optional[str] - Telegram username
+        password: str - Access password
+    
+    Returns:
+        User role (admin or user)
+    
+    Logs:
+        User login with role, telegram_id, and username
+    """
+    telegram_id = login_data.get('telegram_id')
+    telegram_username = login_data.get('telegram_username')
+    password = login_data.get('password')
+    
+    if not telegram_id or not password:
+        raise HTTPException(
+            status_code=400,
+            detail="telegram_id and password are required"
+        )
+    
+    # Get passwords from environment
+    admin_password = os.getenv("ADMIN_PASSWORD")
+    user_password = os.getenv("USER_PASSWORD")
+    
+    # Validate passwords are configured
+    if not admin_password or not user_password:
+        logger.error("ADMIN_PASSWORD or USER_PASSWORD not configured in .env")
+        raise HTTPException(
+            status_code=500,
+            detail="Server misconfiguration: access passwords not set"
+        )
+    
+    # Determine role based on password
+    role = None
+    if password == admin_password:
+        role = "admin"
+    elif password == user_password:
+        role = "user"
+    else:
+        # Invalid password
+        logger.warning(
+            f"Failed login attempt: telegram_id={telegram_id}, username={telegram_username}"
+        )
+        raise HTTPException(
+            status_code=401,
+            detail="Неверный пароль доступа"
+        )
+    
+    # Save role for user
+    progress_repo.set_user_role(telegram_id, role)
+    
+    # Log successful login
+    logger.info(
+        "User login: role=%s, telegram_id=%s, username=%s",
+        role, telegram_id, telegram_username or "N/A"
+    )
+    
+    return {
+        "success": True,
+        "role": role,
+        "user_id": telegram_id
+    }
+
+
 # User role management endpoints
 @router.post("/users/{user_id}/role")
 async def set_user_role(user_id: str, role_data: dict = Body(...)):
@@ -425,7 +496,8 @@ async def set_user_role(user_id: str, role_data: dict = Body(...)):
     if not role:
         raise HTTPException(status_code=400, detail="Role is required")
     
-    valid_roles = ['sales_manager', 'generator', 'admin', 'other']
+    # Only admin and user roles are valid
+    valid_roles = ['admin', 'user']
     if role not in valid_roles:
         raise HTTPException(
             status_code=400, 
@@ -554,6 +626,9 @@ async def get_admin_stats_summary(x_admin_token: Optional[str] = Header(None)):
         Summary statistics
     """
     verify_admin_token(x_admin_token)
+    
+    # Log admin action
+    logger.info("Admin action: stats summary viewed")
     
     try:
         users = progress_repo.get_all_users()
@@ -764,6 +839,9 @@ async def reload_modules(
         Reload status with list of new modules
     """
     verify_admin_token(x_admin_token)
+    
+    # Log admin action
+    logger.info("Admin action: modules reload initiated, notify_users=%s", notify_users)
     
     try:
         # Get module IDs before reload
@@ -1049,6 +1127,9 @@ async def get_mega_stats(x_admin_token: Optional[str] = Header(None)):
     admin_token = os.getenv("ADMIN_API_KEY")
     if admin_token and x_admin_token != admin_token:
         raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Log admin action
+    logger.info("Admin action: mega_stats viewed")
     
     try:
         stats = mega_stats_service.get_mega_stats(module_repo)
