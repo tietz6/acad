@@ -4,13 +4,13 @@ Product Module P5 - Video Editing
 """
 
 module_id = "module_p5_video"
-title = "P5 — Видеомонтаж"
+title = "Продукт P3 — Видеомонтаж (Уровень 1)"
 description = "Превращаем фото, видео и песню в кино про человека и его историю"
 role_visibility = ["admin", "user"]
 level = 1
 estimated_duration_minutes = 65
-products = ["P5"]
-keywords = ["видеомонтаж", "видео", "клип", "монтаж", "фото в видео", "P5", "премиум монтаж", "базовый монтаж", "допродажи"]
+products = ["P3"]
+keywords = ["видеомонтаж", "видео", "клип", "монтаж", "фото в видео", "P3", "премиум монтаж", "базовый монтаж", "допродажи"]
 
 lessons = [
     {
