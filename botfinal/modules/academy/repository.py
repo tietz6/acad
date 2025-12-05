@@ -102,7 +102,9 @@ class ModuleRepository:
         module_files = list(self.modules_dir.glob("module*.py"))
         
         # Exclude module7_tech.py from loading (F7 module removed from system)
-        module_files = [f for f in module_files if f.stem != "module7_tech"]
+        # Exclude module_p3_video_OLD.py from loading (old video editing module - replaced by module_p5_video)
+        excluded_modules = ["module7_tech", "module_p3_video_OLD"]
+        module_files = [f for f in module_files if f.stem not in excluded_modules]
         
         for module_file in module_files:
             try:
